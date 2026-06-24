@@ -1,73 +1,38 @@
-import { useState } from 'react'
-import JobTypeSelector from './components/JobTypeSelector'
-import ResumeInput from './components/ResumeInput'
-import AnalysisResult from './components/AnalysisResult'
-import { useAnalyzeResume } from './hooks/useAnalyzeResume'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+// BrowserRouter：提供路由環境，讓整個 App 可以使用路由功能
+// Routes：路由容器，包住所有 Route
+// Route：定義 URL 路徑對應哪個元件
+// Navigate：重新導向，用來把 / 自動跳到 /dashboard
 
-type JobType = 'frontend' | 'fullstack' | 'backend'
+import Layout from './components/layout/Layout'
+// 關聯：src/components/layout/Layout.tsx
+// Layout 是所有頁面共用的外框（Sidebar + Header + 主內容區）
+
+import Dashboard from './pages/Dashboard'
+import ProductsPage from './pages/products/ProductsPage'
+import InventoryPage from './pages/inventory/InventoryPage'
+import PurchasePage from './pages/purchase/PurchasePage'
+import SalesPage from './pages/sales/SalesPage'
+import SettingsPage from './pages/SettingsPage'
+// 以上六個是各模組的頁面元件，對應六條路由
 
 function App() {
-  const [jobType, setJobType] = useState<JobType>('frontend')
-  const [resumeText, setResumeText] = useState('')
-  // pdfFile 儲存使用者上傳的 File 物件，null 代表還沒上傳
-  const [pdfFile, setPdfFile] = useState<File | null>(null)
-
-  // 從 custom hook 解構出分析函式和三個狀態
-  const { analyze, isLoading, result, error } = useAnalyzeResume()
-
-  // 有 PDF 或文字超過 50 字才能按分析
-  const canAnalyze = pdfFile !== null || resumeText.trim().length > 50
-
-  const handleAnalyze = () => {
-    if (pdfFile) {
-      // 優先用 PDF（圖片辨識模式）
-      analyze({ type: 'pdf', file: pdfFile }, jobType)
-    } else {
-      // 沒有 PDF 就用文字模式
-      analyze({ type: 'text', content: resumeText }, jobType)
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">智慧履歷分析助手</h1>
-        <p className="text-gray-400 mb-8">AI-powered Resume Analyzer</p>
-
-        <div className="flex flex-col gap-6">
-          <div>
-            <p className="text-gray-300 text-sm mb-3">目標職位</p>
-            <JobTypeSelector value={jobType} onChange={setJobType} />
-          </div>
-
-          {/* onPdfUpload：PDF 上傳成功時把 File 物件傳給 App */}
-          <ResumeInput
-            value={resumeText}
-            onChange={setResumeText}
-            onPdfUpload={setPdfFile}
-          />
-
-          <button
-            disabled={!canAnalyze || isLoading}
-            onClick={handleAnalyze}
-            className={`w-full py-3 rounded-xl font-medium transition-all ${
-              canAnalyze && !isLoading
-                ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
-                : 'bg-gray-800 text-gray-600 cursor-not-allowed'
-            }`}
-          >
-            {isLoading
-              ? '分析中...'
-              : canAnalyze
-                ? '開始分析履歷'
-                : '請輸入履歷內容或上傳 PDF / DOCX'}
-          </button>
-
-          {/* 分析結果，三種狀態都在這個元件裡處理 */}
-          <AnalysisResult result={result} isLoading={isLoading} error={error} />
-        </div>
-      </div>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Layout 包住所有子路由，讓每個頁面都有 Sidebar 和 Header */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          {/* index route：進入 / 時自動導向 /dashboard */}
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="products"  element={<ProductsPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="purchase"  element={<PurchasePage />} />
+          <Route path="sales"     element={<SalesPage />} />
+          <Route path="settings"  element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

@@ -1,0 +1,151 @@
+{
+  "products": [
+    {
+      "id": "p001",
+      "name": "招牌牛肉麵",
+      "categoryId": "cat001",
+      "price": 180,
+      "taxType": "TAX_5",
+      "description": "精燉8小時的濃郁牛骨湯底，搭配軟嫩牛腱肉。",
+      "imageUrl": null,
+      "recipe": [
+        {
+          "ingredientId": "i001",
+          "quantity": 200
+        },
+        {
+          "ingredientId": "i002",
+          "quantity": 150
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": "p002",
+      "name": "滷肉飯",
+      "categoryId": "cat001",
+      "price": 60,
+      "taxType": "TAX_5",
+      "description": "古早味滷肉，香氣十足。",
+      "imageUrl": null,
+      "recipe": [
+        {
+          "ingredientId": "i003",
+          "quantity": 80
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": "p003",
+      "name": "珍珠奶茶",
+      "categoryId": "cat002",
+      "price": 65,
+      "taxType": "TAX_5",
+      "description": "Q彈珍珠搭配香濃奶茶。",
+      "imageUrl": null,
+      "recipe": [
+        {
+          "ingredientId": "i004",
+          "quantity": 30
+        }
+      ],
+      "isActive": true,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    }
+  ],
+  "productCategories": [
+    {
+      "id": "cat001",
+      "name": "主食"
+    },
+    {
+      "id": "cat002",
+      "name": "飲料"
+    },
+    {
+      "id": "cat003",
+      "name": "甜點"
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "i001",
+      "name": "牛腱肉",
+      "unit": "g",
+      "category": "肉類",
+      "supplierId": "s001",
+      "currentStock": 3000,
+      "safetyStock": 1000,
+      "expiryDays": 3,
+      "costPerUnit": 0.18,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": "i002",
+      "name": "麵條",
+      "unit": "g",
+      "category": "乾貨",
+      "supplierId": "s002",
+      "currentStock": 500,
+      "safetyStock": 2000,
+      "expiryDays": 180,
+      "costPerUnit": 0.02,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": "i003",
+      "name": "豬五花肉",
+      "unit": "g",
+      "category": "肉類",
+      "supplierId": "s001",
+      "currentStock": 2000,
+      "safetyStock": 500,
+      "expiryDays": 3,
+      "costPerUnit": 0.12,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": "i004",
+      "name": "珍珠粉圓",
+      "unit": "g",
+      "category": "飲料原料",
+      "supplierId": "s002",
+      "currentStock": 800,
+      "safetyStock": 1000,
+      "expiryDays": 7,
+      "costPerUnit": 0.05,
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    }
+  ],
+  "stockLogs": [],
+  "suppliers": [
+    {
+      "id": "s001",
+      "name": "台灣生鮮肉品行",
+      "contact": "陳老闆",
+      "phone": "0912-345-678",
+      "paymentTerm": "月結30天",
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": "s002",
+      "name": "南北乾貨批發",
+      "contact": "林小姐",
+      "phone": "0923-456-789",
+      "paymentTerm": "貨到付款",
+      "createdAt": "2026-06-01T08:00:00.000Z"
+    }
+  ],
+  "purchaseOrders": [],
+  "salesOrders": [],
+  "settings": {
+    "taxRate": 5,
+    "currency": "NTD",
+    "lowStockThreshold": 20,
+    "expiryWarningDays": 7
+  },
+  "$schema": "./node_modules/json-server/schema.json"
+}
