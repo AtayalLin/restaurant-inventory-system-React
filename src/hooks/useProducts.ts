@@ -12,6 +12,23 @@ import type { Product, ProductCategory } from '../types'
 // ==========================================
 const BASE = '/api'
 
+// ── fetch helper：處理 304 Not Modified ──────────────────────
+// 為什麼需要：瀏覽器自動帶 If-None-Match 快取標頭
+//   json-server 收到後回傳 304 + 空 body
+//   res.json() 解析空 body 拋出 SyntaxError → TanStack Query 無限重試
+//   加上 Cache-Control: no-cache 強制每次取得最新資料
+// 為什麼用泛型 <T>：讓每個呼叫點自行指定回傳型別，一個函式通用所有 API
+async function fetchJSON<T>(url: string): Promise<T> {
+  const res = await fetch(url, {
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    },
+  })
+  if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
+  return res.json()
+}
+
 // ==========================================
 // 商品分類（ProductCategory）
 // ==========================================
@@ -19,12 +36,9 @@ const BASE = '/api'
 // 取得所有商品分類 - 給下拉選單使用
 export function useProductCategories() {
   return useQuery<ProductCategory[]>({
-    queryKey: ['productCategories'],        // 快取的唯一識別 key
-    queryFn: async () => {
-      const res = await fetch(`${BASE}/productCategories`)
-      if (!res.ok) throw new Error('取得商品分類失敗')
-      return res.json()
-    },
+    queryKey: ['productCategories'],
+    queryFn: () => fetchJSON<ProductCategory[]>(`${BASE}/productCategories`),
+    // 改用 fetchJSON：避免 304 快取問題
   })
 }
 
@@ -35,12 +49,9 @@ export function useProductCategories() {
 // 取得所有商品列表
 export function useProducts() {
   return useQuery<Product[]>({
-    queryKey: ['products'],                 // 快取 key，useMutation 成功後用此 key 刷新
-    queryFn: async () => {
-      const res = await fetch(`${BASE}/products`)
-      if (!res.ok) throw new Error('取得商品列表失敗')
-      return res.json()
-    },
+    queryKey: ['products'],
+    queryFn: () => fetchJSON<Product[]>(`${BASE}/products`),
+    // 改用 fetchJSON：避免 304 快取問題
   })
 }
 
@@ -55,7 +66,7 @@ export function useCreateProduct() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          id: crypto.randomUUID(),          // 瀏覽器內建 UUID 產生器
+          id: crypto.randomUUID(),
           createdAt: new Date().toISOString(),
         }),
       })
@@ -63,7 +74,6 @@ export function useCreateProduct() {
       return res.json()
     },
     onSuccess: () => {
-      // 新增成功後，讓 ['products'] 快取失效 → 自動重新 fetch 列表
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
   })
