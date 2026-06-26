@@ -80,7 +80,7 @@
       "currentStock": 3001,
       "safetyStock": 1000,
       "expiryDays": 3,
-      "costPerUnit": 0.18,
+      "costPerUnit": 0.3,
       "createdAt": "2026-06-01T08:00:00.000Z"
     },
     {
@@ -92,7 +92,7 @@
       "currentStock": 500,
       "safetyStock": 2000,
       "expiryDays": 180,
-      "costPerUnit": 0.02,
+      "costPerUnit": 0.04,
       "createdAt": "2026-06-01T08:00:00.000Z"
     },
     {
@@ -104,7 +104,7 @@
       "currentStock": 2000,
       "safetyStock": 500,
       "expiryDays": 3,
-      "costPerUnit": 0.12,
+      "costPerUnit": 0.2,
       "createdAt": "2026-06-01T08:00:00.000Z"
     },
     {
@@ -116,7 +116,7 @@
       "currentStock": 800,
       "safetyStock": 1000,
       "expiryDays": 7,
-      "costPerUnit": 0.05,
+      "costPerUnit": 0.08,
       "createdAt": "2026-06-01T08:00:00.000Z"
     }
   ],
@@ -175,7 +175,26 @@
       "createdAt": "2026-06-26T04:58:20.386Z"
     }
   ],
-  "salesOrders": [],
+  "salesOrders": [
+    {
+      "status": "PENDING",
+      "items": [
+        {
+          "productId": "p001",
+          "quantity": 1,
+          "unitPrice": 180
+        }
+      ],
+      "subtotal": 180,
+      "taxAmount": 9,
+      "discount": 50,
+      "total": 139,
+      "channel": "DINE_IN",
+      "note": "加蔥",
+      "id": "JMFCWV-zn_s",
+      "createdAt": "2026-06-26T05:10:31.401Z"
+    }
+  ],
   "settings": {
     "taxRate": 5,
     "currency": "NTD",
