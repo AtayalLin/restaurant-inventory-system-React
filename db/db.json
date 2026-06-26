@@ -77,7 +77,7 @@
       "unit": "g",
       "category": "肉類",
       "supplierId": "s001",
-      "currentStock": 3000,
+      "currentStock": 3001,
       "safetyStock": 1000,
       "expiryDays": 3,
       "costPerUnit": 0.18,
@@ -139,7 +139,42 @@
       "createdAt": "2026-06-01T08:00:00.000Z"
     }
   ],
-  "purchaseOrders": [],
+  "purchaseOrders": [
+    {
+      "supplierId": "s001",
+      "status": "RECEIVED",
+      "items": [
+        {
+          "ingredientId": "i001",
+          "quantity": 1,
+          "unitPrice": 500
+        }
+      ],
+      "totalAmount": 500,
+      "expectedDate": "2026-06-05",
+      "receivedDate": "2026-06-25T07:08:50.639Z",
+      "note": "冷藏",
+      "id": "yIc5-WbzK_g",
+      "createdAt": "2026-06-25T07:01:13.836Z"
+    },
+    {
+      "supplierId": "s002",
+      "status": "CANCELLED",
+      "items": [
+        {
+          "ingredientId": "i003",
+          "quantity": 1,
+          "unitPrice": 500
+        }
+      ],
+      "totalAmount": 500,
+      "expectedDate": null,
+      "receivedDate": null,
+      "note": "溫體豬",
+      "id": "ipWNPG3P8Cs",
+      "createdAt": "2026-06-26T04:58:20.386Z"
+    }
+  ],
   "salesOrders": [],
   "settings": {
     "taxRate": 5,
