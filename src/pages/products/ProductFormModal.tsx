@@ -1,13 +1,18 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 // useEffect：當 product prop 變動時（從新增切到編輯），重設表單內容
 // 為什麼需要：useForm 的 defaultValues 只在元件初始化時讀取一次，
 //             後續 prop 變動不會自動更新，需要手動呼叫 reset()
 
-import { useForm } from 'react-hook-form'
+import { generateProductDescription } from '../../hooks/useAI'
+// 關聯：src/hooks/useAI.ts
+// AI 商品文案生成（Streaming）
+
+import { useForm, useWatch as useFormWatch } from 'react-hook-form'
 // useForm：管理表單狀態（欄位值、錯誤、送出狀態）
 // 為什麼用 react-hook-form 不用 useState：
 //   純 useState 每個欄位都要一個 state，10 個欄位就要 10 個 useState
 //   react-hook-form 用 ref 追蹤欄位值，re-render 次數少很多，效能更好
+// useWatch 改名為 useFormWatch 避免與其他命名衝突
 
 import { zodResolver } from '@hookform/resolvers/zod'
 // zodResolver：把 zod schema 接到 react-hook-form 的驗證系統
@@ -85,6 +90,47 @@ function ProductFormModal({ product, onClose }: Props) {
   // isEditMode：用來決定標題文字、按鈕文字、呼叫哪個 API
   // 為什麼用衍生變數而不是 prop：減少父元件需要傳入的資訊，邏輯內聚
 
+  // ── AI 文案生成狀態 ────────────────────────────────────────
+const [isAIGenerating, setIsAIGenerating] = useState(false)
+// isAIGenerating：生成中為 true，用於 disable 按鈕和顯示 loading 文字
+
+// watch：監聽商品名稱和分類欄位，用於判斷 AI 按鈕是否可點擊
+// 為什麼需要 watch：disabled 條件需要即時讀取表單值
+
+
+async function handleAIGenerate() {
+const name       = watchedValues.name       ?? ''
+// ?? ''：undefined 時給空字串，保持 string 型別
+const categoryId = watchedValues.categoryId ?? ''
+// categoryId 是 string（UUID），不需要 Number() 轉換
+const price      = Number(watchedValues.price) || 0
+// 只有 price 需要 Number() 轉換
+
+// Number()：確保型別是 number，undefined 會變成 NaN，|| 0 給預設值
+
+  // 查出分類名稱（AI prompt 用中文分類名稱更好）
+  const categoryName = categories.find(c => c.id === categoryId)?.name ?? categoryId
+
+  setIsAIGenerating(true)
+  setValue('description', '')
+  // 先清空描述欄，準備逐字填入
+
+  try {
+    // for await...of：接收 AsyncGenerator yield 出來的每段文字
+    for await (const chunk of generateProductDescription(name, categoryName, price)) {
+      // 每次 yield 一段文字，累加到 description 欄位
+      setValue('description', (getValues('description') ?? '') + chunk)
+      // getValues：取得目前表單欄位的值
+      // 為什麼不用 watch：watch 是讀取，setValue 才能更新
+    }
+  } catch (err) {
+    console.error('AI 生成失敗：', err)
+    setValue('description', '⚠️ AI 生成失敗，請稍後再試或手動填寫。')
+  } finally {
+    setIsAIGenerating(false)
+  }
+}
+
   // ── 取得分類資料（給下拉選單） ──────────────────────────
   const { data: categories = [] } = useProductCategories()
   // 關聯：useProductCategories() 打 GET /api/productCategories
@@ -109,6 +155,9 @@ function ProductFormModal({ product, onClose }: Props) {
     // handleSubmit：包裝 onSubmit，先執行 zod 驗證，通過才呼叫我們的函式
     reset,
     // reset：重設表單內容，編輯模式切換時用來帶入新資料
+    setValue,      // ← 新增：AI 生成時填入描述
+    getValues,     // ← 新增：AI 生成時讀取目前描述值
+    control,       // ← 新增：useFormWatch 需要
     formState: { errors },
     // errors：zod 驗證失敗的錯誤訊息，{ name: { message: '...' }, ... }
   } = useForm<ProductFormData>({
@@ -126,6 +175,9 @@ function ProductFormModal({ product, onClose }: Props) {
       // 新增模式：product 為 null，帶入空值/預設值
     },
   })
+
+  const watchedValues = useFormWatch({ control })
+// watchedValues 是整個表單目前的值物件
 
   // ── 切換編輯目標時重設表單 ────────────────────────────
   // 為什麼需要 useEffect + reset：
@@ -292,20 +344,46 @@ function ProductFormModal({ product, onClose }: Props) {
   {errors.price && <p style={errorStyle}>{errors.price.message}</p>}
 </div>
 
-          {/* 商品描述 */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>商品描述</label>
-            <textarea
-              {...register('description')}
-              placeholder="選填，之後可用 AI 一鍵生成"
-              rows={3}
-              style={{
-                ...inputStyle(!!errors.description),
-                resize: 'vertical',   // 只允許垂直調整大小
-              }}
-            />
-            {errors.description && <p style={errorStyle}>{errors.description.message}</p>}
-          </div>
+{/* 商品描述 + AI 生成按鈕 */}
+<div style={{ marginBottom: '16px' }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+    <label style={labelStyle}>商品描述</label>
+    <button
+      type="button"
+      onClick={handleAIGenerate}
+      disabled={isAIGenerating || !watchedValues.name || !watchedValues.categoryId}
+      // disabled 條件：
+      //   isAIGenerating：生成中，防止重複點擊
+      //   !watch('name')：商品名稱還沒填，AI 無法生成
+      //   !watch('categoryId')：分類還沒選，AI 無法生成
+      style={{
+        padding: '4px 12px',
+        fontSize: '12px',
+        border: '1px solid #7C3AED',
+        borderRadius: '4px',
+        background: isAIGenerating ? '#EDE9FE' : '#F5F3FF',
+        color: '#7C3AED',
+        cursor: isAIGenerating || !watchedValues.name || !watchedValues.categoryId
+          ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+      }}
+    >
+      {isAIGenerating ? '⏳ 生成中...' : '✨ AI 生成描述'}
+    </button>
+  </div>
+  <textarea
+    {...register('description')}
+    placeholder="選填，點擊「✨ AI 生成描述」自動生成"
+    rows={3}
+    style={{
+      ...inputStyle(!!errors.description),
+      resize: 'vertical',
+    }}
+  />
+  {errors.description && <p style={errorStyle}>{errors.description.message}</p>}
+</div>
 
           {/* 販售狀態 */}
           <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
