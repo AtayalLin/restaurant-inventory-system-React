@@ -11,13 +11,18 @@
     "server": "json-server db/db.json --port 3001"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.101.0",
     "axios": "^1.18.0",
     "mammoth": "^1.12.0",
     "pdfjs-dist": "^6.0.227",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-markdown": "^10.1.0"
+    "react-hook-form": "^7.80.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.18.1",
+    "recharts": "^3.9.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -30,6 +35,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "json-server": "^1.0.0-beta.15",
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",

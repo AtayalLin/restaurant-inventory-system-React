@@ -77,7 +77,7 @@
       "unit": "g",
       "category": "肉類",
       "supplierId": "s001",
-      "currentStock": 3001,
+      "currentStock": 2801,
       "safetyStock": 1000,
       "expiryDays": 3,
       "costPerUnit": 0.3,
@@ -89,7 +89,7 @@
       "unit": "g",
       "category": "乾貨",
       "supplierId": "s002",
-      "currentStock": 500,
+      "currentStock": 350,
       "safetyStock": 2000,
       "expiryDays": 180,
       "costPerUnit": 0.04,
@@ -113,7 +113,7 @@
       "unit": "g",
       "category": "飲料原料",
       "supplierId": "s002",
-      "currentStock": 800,
+      "currentStock": 0,
       "safetyStock": 1000,
       "expiryDays": 7,
       "costPerUnit": 0.08,
@@ -177,7 +177,7 @@
   ],
   "salesOrders": [
     {
-      "status": "PENDING",
+      "status": "COMPLETED",
       "items": [
         {
           "productId": "p001",
@@ -193,6 +193,24 @@
       "note": "加蔥",
       "id": "JMFCWV-zn_s",
       "createdAt": "2026-06-26T05:10:31.401Z"
+    },
+    {
+      "status": "COMPLETED",
+      "items": [
+        {
+          "productId": "p003",
+          "quantity": 80,
+          "unitPrice": 65
+        }
+      ],
+      "subtotal": 5200,
+      "taxAmount": 260,
+      "discount": 0,
+      "total": 5460,
+      "channel": "DINE_IN",
+      "note": "flow 科技公司團購",
+      "id": "9d_rO3ygAN8",
+      "createdAt": "2026-06-30T04:56:24.059Z"
     }
   ],
   "settings": {
