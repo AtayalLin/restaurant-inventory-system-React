@@ -12,21 +12,31 @@ import type { Product, ProductCategory } from '../types'
 // ==========================================
 const BASE = '/api'
 
-// ── fetch helper：處理 304 Not Modified ──────────────────────
+// ── fetch helper：處理 304 Not Modified + 自動重試 ────────────
 // 為什麼需要：瀏覽器自動帶 If-None-Match 快取標頭
 //   json-server 收到後回傳 304 + 空 body
 //   res.json() 解析空 body 拋出 SyntaxError → TanStack Query 無限重試
 //   加上 Cache-Control: no-cache 強制每次取得最新資料
-// 為什麼用泛型 <T>：讓每個呼叫點自行指定回傳型別，一個函式通用所有 API
-async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url, {
-    headers: {
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
-    },
-  })
-  if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
-  return res.json()
+// 為什麼加 retry：json-server 在大量併發寫入時可能短暫斷線
+//   重試機制讓前端自動恢復，不會直接整片紅字噴錯
+async function fetchJSON<T>(url: string, retries = 2): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      })
+      if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
+      return res.json()
+    } catch (err) {
+      if (attempt === retries) throw err
+      // 指數退避：第一次重試等 300ms，第二次等 600ms
+      await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)))
+    }
+  }
+  throw new Error('無法連線到伺服器')
 }
 
 // ==========================================
@@ -38,7 +48,6 @@ export function useProductCategories() {
   return useQuery<ProductCategory[]>({
     queryKey: ['productCategories'],
     queryFn: () => fetchJSON<ProductCategory[]>(`${BASE}/productCategories`),
-    // 改用 fetchJSON：避免 304 快取問題
   })
 }
 
@@ -47,11 +56,13 @@ export function useProductCategories() {
 // ==========================================
 
 // 取得所有商品列表
-export function useProducts() {
+// options：可選的額外 query 設定（例如 Dashboard 要用的 refetchInterval）
+//   不傳的話沿用預設行為，其他頁面（ProductsPage）完全不受影響
+export function useProducts(options?: { refetchInterval?: number; refetchOnWindowFocus?: boolean }) {
   return useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: () => fetchJSON<Product[]>(`${BASE}/products`),
-    // 改用 fetchJSON：避免 304 快取問題
+    ...options,
   })
 }
 

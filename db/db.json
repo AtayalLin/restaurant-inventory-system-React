@@ -113,7 +113,7 @@
       "unit": "g",
       "category": "飲料原料",
       "supplierId": "s002",
-      "currentStock": 0,
+      "currentStock": 2000,
       "safetyStock": 1000,
       "expiryDays": 7,
       "costPerUnit": 0.08,
@@ -173,6 +173,23 @@
       "note": "溫體豬",
       "id": "ipWNPG3P8Cs",
       "createdAt": "2026-06-26T04:58:20.386Z"
+    },
+    {
+      "supplierId": "s002",
+      "status": "RECEIVED",
+      "items": [
+        {
+          "ingredientId": "i004",
+          "quantity": 5000,
+          "unitPrice": 1
+        }
+      ],
+      "totalAmount": 5000,
+      "expectedDate": "2026-06-30",
+      "receivedDate": "2026-06-30T05:05:08.005Z",
+      "note": "",
+      "id": "9sMUCQcfPVU",
+      "createdAt": "2026-06-30T05:05:02.490Z"
     }
   ],
   "salesOrders": [
@@ -211,6 +228,24 @@
       "note": "flow 科技公司團購",
       "id": "9d_rO3ygAN8",
       "createdAt": "2026-06-30T04:56:24.059Z"
+    },
+    {
+      "status": "COMPLETED",
+      "items": [
+        {
+          "productId": "p003",
+          "quantity": 100,
+          "unitPrice": 65
+        }
+      ],
+      "subtotal": 6500,
+      "taxAmount": 325,
+      "discount": 325,
+      "total": 6500,
+      "channel": "DINE_IN",
+      "note": "",
+      "id": "2n3GSUWR0ZI",
+      "createdAt": "2026-06-30T05:05:49.052Z"
     }
   ],
   "settings": {

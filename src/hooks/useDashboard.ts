@@ -1,8 +1,12 @@
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useProducts } from './useProducts'
 import { useIngredients } from './useIngredients'
 import { useSalesOrders } from './useSalesOrders'
-// 重用三個現有 hook，各自負責資料抓取，這裡只做衍生計算
+// 重用三個現有 hook 拿到的 queryKey 結構一致，這裡額外疊加 refetchInterval
+// 為什麼不直接改 useProducts.ts 等共用 hook：
+//   InventoryPage、ProductsPage 等其他頁面也在用同一批 hook
+//   全站套用 30 秒輪詢會增加不必要的網路請求，只有 Dashboard 需要自動更新
 // 關聯：src/pages/Dashboard.tsx 會呼叫這個 hook 取得所有畫面所需資料
 
 // ==========================================
@@ -14,7 +18,7 @@ export interface LowStockItem {
   name: string
   currentStock: number
   safetyStock: number
-  unit: string
+  unit: string  
   shortage: number
 }
 
@@ -50,9 +54,21 @@ export interface DailyTrend {
 // ==========================================
 
 export function useDashboard() {
-  const { data: products = [], isLoading: productsLoading } = useProducts()
-  const { data: ingredients = [], isLoading: ingredientsLoading } = useIngredients()
-  const { data: salesOrders = [], isLoading: salesLoading } = useSalesOrders()
+
+   // ── 自動更新設定 ──────────────────────────────────────────
+  // refetchInterval：每 30 秒自動重新抓取一次，數字變動會自動反映
+  // refetchOnWindowFocus：TanStack Query 預設行為，切回分頁時自動重抓一次
+  //   涵蓋「老闆切去別的分頁操作銷售，再切回 Dashboard」這種情境
+  // 為什麼選 30 秒而非更短：Dashboard 是給人看趨勢的頁面，不需要秒級更新
+  //   太頻繁的輪詢會增加 json-server 負擔，30 秒是顯示即時感和效能的平衡點
+  const autoRefreshOptions = {
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  }
+    
+  const { data: products = [], isLoading: productsLoading } = useProducts(autoRefreshOptions)
+  const { data: ingredients = [], isLoading: ingredientsLoading } = useIngredients(autoRefreshOptions)
+  const { data: salesOrders = [], isLoading: salesLoading } = useSalesOrders(autoRefreshOptions)
 
   const isLoading = productsLoading || ingredientsLoading || salesLoading
 

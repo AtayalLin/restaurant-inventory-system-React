@@ -23,16 +23,25 @@ const BASE = '/api'
 //   json-server 收到後回傳 304 + 空 body
 //   res.json() 解析空 body 拋出 SyntaxError → TanStack Query 無限重試
 //   加上 Cache-Control: no-cache 強制每次取得最新資料
-async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url, {
-    headers: {
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache', 
-    },
-  })
-  if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
-  return res.json()
+async function fetchJSON<T>(url: string, retries = 2): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      })
+      if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
+      return res.json()
+    } catch (err) {
+      if (attempt === retries) throw err
+      await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)))
+    }
+  }
+  throw new Error('無法連線到伺服器')
 }
+
 
 // ==========================================
 // 供應商（Supplier）- 給食材表單的下拉選單使用
@@ -55,10 +64,11 @@ export function useSuppliers() {
 // ==========================================
 
 // 取得所有食材列表
-export function useIngredients() {
+export function useIngredients(options?: { refetchInterval?: number; refetchOnWindowFocus?: boolean }) {
   return useQuery<Ingredient[]>({
     queryKey: ['ingredients'],
     queryFn: () => fetchJSON<Ingredient[]>(`${BASE}/ingredients`),
+    ...options,
   })
 }
 
