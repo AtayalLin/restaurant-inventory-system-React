@@ -2,6 +2,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { useDashboard } from '../hooks/useDashboard'
+import { useRestockSuggestion } from '../hooks/useRestockSuggestion'
 // 儀表板頁面 - 對應路由 /dashboard
 
 function Dashboard() {
@@ -13,6 +14,21 @@ function Dashboard() {
     revenueStats,
     dailyTrend,
   } = useDashboard()
+
+  // ✅ Hook 必須在所有條件式之前呼叫（React Hooks 規則）
+  const restockMutation = useRestockSuggestion()
+
+  const handleRestockSuggestion = () => {
+    restockMutation.mutate({
+      ingredients: lowStockItems.map(item => ({
+        name: item.name,
+        currentStock: item.currentStock,
+        safetyStock: item.safetyStock,
+        unit: item.unit,
+        shortage: item.shortage,
+      })),
+    })
+  }
 
   if (isLoading) {
     return (
@@ -62,17 +78,40 @@ function Dashboard() {
           {lowStockItems.length === 0 ? (
             <p className="text-sm text-gray-400">目前庫存皆充足</p>
           ) : (
-            <ul className="space-y-2">
-              {lowStockItems.map(item => (
-                <li key={item.id} className="flex justify-between text-sm border-b pb-1">
-                  <span>{item.name}</span>
-                  <span className="text-red-600">
-                    {item.currentStock}{item.unit} / 安全 {item.safetyStock}{item.unit}
-                    （缺 {item.shortage}{item.unit}）
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="space-y-2 mb-3">
+                {lowStockItems.map(item => (
+                  <li key={item.id} className="flex justify-between text-sm border-b pb-1">
+                    <span>{item.name}</span>
+                    <span className="text-red-600">
+                      {item.currentStock}{item.unit} / 安全 {item.safetyStock}{item.unit}
+                      （缺 {item.shortage}{item.unit}）
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* AI 補貨建議按鈕 */}
+              <button
+                onClick={handleRestockSuggestion}
+                disabled={restockMutation.isPending}
+                className="w-full text-sm bg-orange-50 text-orange-600 border border-orange-200 rounded-md py-2 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {restockMutation.isPending ? '🤖 AI 分析中...' : '🤖 AI 補貨建議'}
+              </button>
+
+              {restockMutation.isError && (
+                <p className="text-xs text-red-500 mt-2">
+                  AI 建議服務暫時無法使用，請稍後再試
+                </p>
+              )}
+
+              {restockMutation.isSuccess && (
+                <div className="mt-3 bg-orange-50 border border-orange-200 rounded-md p-3 text-sm text-gray-700 whitespace-pre-line">
+                  {restockMutation.data.suggestion}
+                </div>
+              )}
+            </>
           )}
         </div>
 
