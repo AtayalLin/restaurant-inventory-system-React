@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { useDashboard } from '../hooks/useDashboard'
 import { useRestockSuggestion } from '../hooks/useRestockSuggestion'
+import { useQueryAssistant } from '../hooks/useQueryAssistant' // 新增：Agent B 自然語言查詢助理
 // 儀表板頁面 - 對應路由 /dashboard
 
 function Dashboard() {
   const {
     isLoading,
+    isError, // 新增：判斷資料來源是否有任一個 API 失敗
     lowStockItems,
     expiryWarnings,
     productMargins,
@@ -17,6 +20,15 @@ function Dashboard() {
 
   // ✅ Hook 必須在所有條件式之前呼叫（React Hooks 規則）
   const restockMutation = useRestockSuggestion()
+
+  // Agent B：自然語言查詢助理
+  const queryAssistant = useQueryAssistant()
+  const [question, setQuestion] = useState('') // 使用者輸入的問題
+
+  const handleAskQuestion = () => {
+    if (!question.trim()) return // 避免送出空白問題
+    queryAssistant.mutate(question)
+  }
 
   const handleRestockSuggestion = () => {
     restockMutation.mutate({
@@ -34,6 +46,17 @@ function Dashboard() {
     return (
       <div className="p-6">
         <p className="text-gray-500">資料載入中...</p>
+      </div>
+    )
+  }
+
+  // 新增：資料來源異常時，明確告知使用者，而不是安靜地顯示看起來正常但其實是空的數字
+  if (isError) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          資料載入失敗，請確認伺服器（json-server）是否正常運作，或重新整理頁面再試一次
+        </div>
       </div>
     )
   }
@@ -62,6 +85,40 @@ function Dashboard() {
             <Line type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Agent B：自然語言查詢助理 */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="font-semibold mb-3">💬 智慧查詢助理</h3>
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
+            placeholder="試試問我：本週營收多少？"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+          />
+          <button
+            onClick={handleAskQuestion}
+            disabled={queryAssistant.isPending || !question.trim()}
+            className="text-sm bg-orange-50 text-orange-600 border border-orange-200 rounded-md px-4 py-2 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {queryAssistant.isPending ? '思考中...' : '送出'}
+          </button>
+        </div>
+
+        {queryAssistant.isError && (
+          <p className="text-xs text-red-500">
+            查詢服務暫時無法使用，請稍後再試
+          </p>
+        )}
+
+        {queryAssistant.isSuccess && (
+          <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm text-gray-700 whitespace-pre-line">
+            {queryAssistant.data.answer}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

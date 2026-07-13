@@ -6,7 +6,7 @@
       "categoryId": "cat001",
       "price": 180,
       "taxType": "TAX_5",
-      "description": "精燉8小時的濃郁牛骨湯底，搭配軟嫩牛腱肉。",
+      "description": "精心煮製的牛肉，滑嫩至口嚙，浸泡在醬汁中濃厚的風味，與細嫩的麵條融合，令人垂涎。手工調製的醬汁，結合了橄欖油和黑胡椒的獨特風味，讓每一口都充滿層次。NT$180",
       "imageUrl": null,
       "recipe": [
         {
@@ -77,7 +77,7 @@
       "unit": "g",
       "category": "肉類",
       "supplierId": "s001",
-      "currentStock": 2801,
+      "currentStock": 1801,
       "safetyStock": 1000,
       "expiryDays": 3,
       "costPerUnit": 0.3,
@@ -89,7 +89,7 @@
       "unit": "g",
       "category": "乾貨",
       "supplierId": "s002",
-      "currentStock": 350,
+      "currentStock": 1250,
       "safetyStock": 2000,
       "expiryDays": 180,
       "costPerUnit": 0.04,
@@ -190,6 +190,23 @@
       "note": "",
       "id": "9sMUCQcfPVU",
       "createdAt": "2026-06-30T05:05:02.490Z"
+    },
+    {
+      "supplierId": "s001",
+      "status": "RECEIVED",
+      "items": [
+        {
+          "ingredientId": "i002",
+          "quantity": 1650,
+          "unitPrice": 100
+        }
+      ],
+      "totalAmount": 165000,
+      "expectedDate": "2026-07-06",
+      "receivedDate": "2026-07-06T07:47:34.427Z",
+      "note": "急件",
+      "id": "htadeTjinZU",
+      "createdAt": "2026-07-06T07:47:27.718Z"
     }
   ],
   "salesOrders": [
@@ -246,6 +263,24 @@
       "note": "",
       "id": "2n3GSUWR0ZI",
       "createdAt": "2026-06-30T05:05:49.052Z"
+    },
+    {
+      "status": "COMPLETED",
+      "items": [
+        {
+          "productId": "p001",
+          "quantity": 5,
+          "unitPrice": 180
+        }
+      ],
+      "subtotal": 900,
+      "taxAmount": 45,
+      "discount": 45,
+      "total": 900,
+      "channel": "DINE_IN",
+      "note": "加辣",
+      "id": "UQ8nD4OwVl4",
+      "createdAt": "2026-07-06T07:47:59.941Z"
     }
   ],
   "settings": {

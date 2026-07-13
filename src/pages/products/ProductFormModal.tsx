@@ -99,33 +99,28 @@ const [isAIGenerating, setIsAIGenerating] = useState(false)
 
 
 async function handleAIGenerate() {
-const name       = watchedValues.name       ?? ''
-// ?? ''：undefined 時給空字串，保持 string 型別
-const categoryId = watchedValues.categoryId ?? ''
-// categoryId 是 string（UUID），不需要 Number() 轉換
-const price      = Number(watchedValues.price) || 0
-// 只有 price 需要 Number() 轉換
+  const name       = watchedValues.name       ?? ''
+  const categoryId = watchedValues.categoryId ?? ''
+  const price      = Number(watchedValues.price) || 0
 
-// Number()：確保型別是 number，undefined 會變成 NaN，|| 0 給預設值
-
-  // 查出分類名稱（AI prompt 用中文分類名稱更好）
   const categoryName = categories.find(c => c.id === categoryId)?.name ?? categoryId
 
   setIsAIGenerating(true)
   setValue('description', '')
-  // 先清空描述欄，準備逐字填入
 
   try {
-    // for await...of：接收 AsyncGenerator yield 出來的每段文字
     for await (const chunk of generateProductDescription(name, categoryName, price)) {
-      // 每次 yield 一段文字，累加到 description 欄位
       setValue('description', (getValues('description') ?? '') + chunk)
-      // getValues：取得目前表單欄位的值
-      // 為什麼不用 watch：watch 是讀取，setValue 才能更新
     }
   } catch (err) {
+    // 【本次修正】原本無論什麼原因失敗，畫面都顯示同一句「請稍後再試」，
+    //   使用者（也就是你自己測試時）看不出是金鑰沒設定、proxy 沒接、還是 API 額度用完，
+    //   只能打開瀏覽器 Console 才看得到真正原因。
+    //   現在把 useAI.ts 拋出的實際錯誤訊息（err.message）直接顯示在描述欄位，
+    //   方便你自己開發時快速定位問題；正式上線前可以再改回較友善的通用文字給真實使用者看。
     console.error('AI 生成失敗：', err)
-    setValue('description', '⚠️ AI 生成失敗，請稍後再試或手動填寫。')
+    const message = err instanceof Error ? err.message : '未知錯誤'
+    setValue('description', `⚠️ AI 生成失敗：${message}`)
   } finally {
     setIsAIGenerating(false)
   }

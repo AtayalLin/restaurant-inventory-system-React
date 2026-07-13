@@ -14,44 +14,50 @@ import type { Ingredient, Supplier } from '../types'
 // Supplier 型別：{ id, name, contact, phone, paymentTerm, createdAt }
 // 為什麼同時引入 Supplier：食材列表需要顯示供應商名稱，要一起取得
 
+import { fetchJSON } from '../lib/fetchJSON' // 新增
+
+
 const BASE = '/api'
 // Vite proxy 會把 /api/... 轉發到 http://localhost:3001/...
 // 關聯：vite.config.ts 的 proxy 設定
 
-// ── fetch helper：處理 304 Not Modified ────────────────────
+// ── fetch helper：處理 304 Not Modified ──────────────────── 因為考慮到可維護性，fetchJSON 已經搬到 src/lib/fetchJSON.ts，這裡不再重複定義，做為參考資料備註於此。
 // 為什麼需要：瀏覽器自動帶 If-None-Match 快取標頭
 //   json-server 收到後回傳 304 + 空 body
 //   res.json() 解析空 body 拋出 SyntaxError → TanStack Query 無限重試
 //   加上 Cache-Control: no-cache 強制每次取得最新資料
-async function fetchJSON<T>(url: string, retries = 2): Promise<T> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      })
-      if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
-      return res.json()
-    } catch (err) {
-      if (attempt === retries) throw err
-      await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)))
-    }
-  }
-  throw new Error('無法連線到伺服器')
-}
+// async function fetchJSON<T>(url: string, retries = 2): Promise<T> {
+//   for (let attempt = 0; attempt <= retries; attempt++) {
+//     try {
+//       const res = await fetch(url, {
+//         headers: {
+//           'Cache-Control': 'no-cache',
+//           'Pragma': 'no-cache',
+//         },
+//       })
+//       if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
+//       return res.json()
+//     } catch (err) {
+//       if (attempt === retries) throw err
+//       await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)))
+//     }
+//   }
+//   throw new Error('無法連線到伺服器')
+// }
 
 
 // ==========================================
 // 供應商（Supplier）- 給食材表單的下拉選單使用
 // ==========================================
 
+// 【本次修正】加上 retry: false，理由同 useIngredients（見下方完整說明），
+//   避免 fetchJSON 內部重試 + useQuery 外層重試疊加，導致 isError 要等超過 10 秒才觸發
 export function useSuppliers() {
   return useQuery<Supplier[]>({
     queryKey: ['suppliers'],
     // 快取 key：TanStack Query 用這個識別快取，相同 key 不重複 fetch
     queryFn: () => fetchJSON<Supplier[]>(`${BASE}/suppliers`),
+    retry: false,
     // 為什麼改用 fetchJSON：
     //   瀏覽器會自動帶 If-None-Match 快取標頭
     //   json-server 收到後回傳 304 + 空 body
@@ -64,15 +70,27 @@ export function useSuppliers() {
 // ==========================================
 
 // 取得所有食材列表
+//
+// 【本次修正】加上 retry: false：
+//   fetchJSON 內部已經有自己的重試機制（重試 2 次 + 指數退避，最多嘗試 3 次）。
+//   TanStack Query 的 useQuery 預設本身也會重試（預設 3 次），
+//   兩層重試疊加會讓失敗判定拖到 10 秒以上，Dashboard 的 isError 錯誤提示
+//   （見 useDashboard.ts）要等很久才會顯示，使用者體感像是卡住而非出錯。
+//   讓 fetchJSON 專心處理重試，TanStack Query 這層改成「失敗一次就回報」。
 export function useIngredients(options?: { refetchInterval?: number; refetchOnWindowFocus?: boolean }) {
   return useQuery<Ingredient[]>({
     queryKey: ['ingredients'],
     queryFn: () => fetchJSON<Ingredient[]>(`${BASE}/ingredients`),
+    retry: false,
     ...options,
   })
 }
 
 // 新增食材
+// 【本次未修改】useMutation 維持原樣，不加 retry: false：
+//   TanStack Query 的 useMutation 預設本來就不會自動重試，跟 useQuery 行為不同，
+//   而且新增/修改/刪除這類「有副作用」的操作，重試可能造成重複寫入，
+//   所以不需要額外處理，也不應該主動加上 retry。
 export function useCreateIngredient() {
   const queryClient = useQueryClient()
 
