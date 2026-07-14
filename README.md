@@ -92,6 +92,65 @@ docker start n8n       # http://localhost:5678
 
 ---
 
+## n8n Webhook 測試方式
+
+這個 workflow 有兩種測試模式，網址不同、使用方式也不同，**不要混用**。
+
+### 模式一：測試模式（Test Mode）— 用於單步除錯
+
+適合情境：想在 n8n 編輯器裡即時看到每個節點的輸入/輸出資料，方便除錯。
+
+**步驟：**
+1. 開啟 workflow，點擊 **Webhook** 節點
+2. 點擊橘色按鈕 **「Listen for test event」**
+3. 畫面會顯示：Listening for test event
+              Make a POST request to:
+              http://localhost:5678/webhook-test/query-assistant
+4. 在終端機執行（注意路徑是 `webhook-test`）：
+```bash
+   curl -X POST http://localhost:5678/webhook-test/query-assistant \
+     -H "Content-Type: application/json; charset=utf-8" \
+     --data-binary @payload.json
+```
+5. 送出後，編輯器會自動跳轉並顯示執行結果，可以逐一點開每個節點查看資料流
+
+**注意事項：**
+- 測試模式**用一次就會失效**，每次測試前都要重新點「Listen for test event」
+- 只適合開發階段除錯用，不適合長時間對外提供服務
+
+---
+
+### 模式二：正式模式（Production Mode）— 用於實際呼叫
+
+適合情境：workflow 已經開發完成，要讓外部系統（例如前端）呼叫。
+
+**步驟：**
+1. 開啟 workflow，右上角點擊 **「Publish」** 讓 workflow 進入 Published 狀態
+2. 不需要點開任何節點、不需要等待監聽畫面
+3. 直接在終端機執行（注意路徑是 `webhook`，沒有 `-test`）：
+```bash
+   curl -X POST http://localhost:5678/webhook/query-assistant \
+     -H "Content-Type: application/json; charset=utf-8" \
+     --data-binary @payload.json
+```
+4. 這條路徑會**持續監聽**，可以無限次呼叫，不需要每次重新啟動
+
+**注意事項：**
+- 修改任何節點內容後，**必須重新按一次 Publish**，正式路徑才會套用新版本
+- 忘記重新 Publish 的話，`webhook` 路徑跑的還是修改前的舊邏輯
+
+---
+
+### 常見錯誤對照
+
+| 症狀 | 原因 |
+|---|---|
+| 節點卡在「Executing previous nodes...」轉圈不動 | 打了正式網址（`webhook`），但編輯器還停在「Listening for test event」等測試事件；或反過來打了測試網址但沒點「Listen for test event」 |
+| `Received request for unknown webhook` | 呼叫的路徑跟目前監聽的模式（test / production）對不上 |
+| 改了程式碼但結果沒變 | 忘記重新 Publish |
+
+---
+
 ## 📝 開發紀錄
 
 ### 已解決的技術問題
