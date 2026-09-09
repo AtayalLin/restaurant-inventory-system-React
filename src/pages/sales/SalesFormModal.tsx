@@ -96,20 +96,19 @@ function SalesFormModal({ onClose }: Props) {
     }
   }
 
-  // ── 表單送出 ──────────────────────────────────────────
+// ── 表單送出 ──────────────────────────────────────────
   function onSubmit(data: SalesFormData) {
     createOrder(
       {
         status:    'PENDING',
-        // 新建訂單從 PENDING 開始
         items:     data.items,
         subtotal,
         taxAmount,
-        // taxAmount：已在前端計算好，直接存入
         discount:  data.discount,
         total,
         channel:   data.channel,
         note:      data.note,
+        testBatchId: null, // 【修正 Bug 2】SalesOrder.testBatchId 已改必填，一般下單固定傳 null
       },
       { onSuccess: onClose }
     )

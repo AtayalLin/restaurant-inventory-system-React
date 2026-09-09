@@ -77,11 +77,12 @@
       "unit": "g",
       "category": "肉類",
       "supplierId": "s001",
-      "currentStock": 1801,
+      "currentStock": 1000,
       "safetyStock": 1000,
       "expiryDays": 3,
       "costPerUnit": 0.3,
-      "createdAt": "2026-06-01T08:00:00.000Z"
+      "createdAt": "2026-06-01T08:00:00.000Z",
+      "version": 1
     },
     {
       "id": "i002",
@@ -89,11 +90,12 @@
       "unit": "g",
       "category": "乾貨",
       "supplierId": "s002",
-      "currentStock": 1250,
+      "currentStock": 750,
       "safetyStock": 2000,
       "expiryDays": 180,
       "costPerUnit": 0.04,
-      "createdAt": "2026-06-01T08:00:00.000Z"
+      "createdAt": "2026-06-01T08:00:00.000Z",
+      "version": 1
     },
     {
       "id": "i003",
@@ -101,11 +103,12 @@
       "unit": "g",
       "category": "肉類",
       "supplierId": "s001",
-      "currentStock": 2000,
+      "currentStock": 400,
       "safetyStock": 500,
       "expiryDays": 3,
       "costPerUnit": 0.2,
-      "createdAt": "2026-06-01T08:00:00.000Z"
+      "createdAt": "2026-06-01T08:00:00.000Z",
+      "version": 1
     },
     {
       "id": "i004",
@@ -117,7 +120,8 @@
       "safetyStock": 1000,
       "expiryDays": 7,
       "costPerUnit": 0.08,
-      "createdAt": "2026-06-01T08:00:00.000Z"
+      "createdAt": "2026-06-01T08:00:00.000Z",
+      "version": 0
     }
   ],
   "stockLogs": [],
@@ -226,7 +230,8 @@
       "channel": "DINE_IN",
       "note": "加蔥",
       "id": "JMFCWV-zn_s",
-      "createdAt": "2026-06-26T05:10:31.401Z"
+      "createdAt": "2026-06-26T05:10:31.401Z",
+      "testBatchId": null
     },
     {
       "status": "COMPLETED",
@@ -244,7 +249,8 @@
       "channel": "DINE_IN",
       "note": "flow 科技公司團購",
       "id": "9d_rO3ygAN8",
-      "createdAt": "2026-06-30T04:56:24.059Z"
+      "createdAt": "2026-06-30T04:56:24.059Z",
+      "testBatchId": null
     },
     {
       "status": "COMPLETED",
@@ -262,7 +268,8 @@
       "channel": "DINE_IN",
       "note": "",
       "id": "2n3GSUWR0ZI",
-      "createdAt": "2026-06-30T05:05:49.052Z"
+      "createdAt": "2026-06-30T05:05:49.052Z",
+      "testBatchId": null
     },
     {
       "status": "COMPLETED",
@@ -280,7 +287,63 @@
       "channel": "DINE_IN",
       "note": "加辣",
       "id": "UQ8nD4OwVl4",
-      "createdAt": "2026-07-06T07:47:59.941Z"
+      "createdAt": "2026-07-06T07:47:59.941Z",
+      "testBatchId": null
+    }
+  ],
+  "testRuns": [
+    {
+      "id": "Dov8Qdkwh0U",
+      "productId": "p001",
+      "productName": "招牌牛肉麵",
+      "ingredientSnapshots": [
+        {
+          "ingredientId": "i001",
+          "ingredientName": "牛腱肉",
+          "originalStock": 1801,
+          "originalVersion": 0,
+          "testStock": 1000
+        },
+        {
+          "ingredientId": "i002",
+          "ingredientName": "麵條",
+          "originalStock": 1250,
+          "originalVersion": 0,
+          "testStock": 750
+        }
+      ],
+      "testCapacity": 5,
+      "concurrentRequests": 100,
+      "status": "PREPARED",
+      "successCount": 0,
+      "failCount": 0,
+      "finalStockSnapshots": [],
+      "isOverSold": false,
+      "createdAt": "2026-08-26T03:52:41.238Z",
+      "completedAt": null
+    },
+    {
+      "id": "PW52EN6H-nE",
+      "productId": "p002",
+      "productName": "滷肉飯",
+      "ingredientSnapshots": [
+        {
+          "ingredientId": "i003",
+          "ingredientName": "豬五花肉",
+          "originalStock": 2000,
+          "originalVersion": 0,
+          "testStock": 400
+        }
+      ],
+      "testCapacity": 5,
+      "concurrentRequests": 100,
+      "status": "PREPARED",
+      "successCount": 0,
+      "failCount": 0,
+      "finalStockSnapshots": [],
+      "isOverSold": false,
+      "createdAt": "2026-08-26T03:52:48.337Z",
+      "completedAt": null
     }
   ],
   "settings": {

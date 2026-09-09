@@ -78,6 +78,53 @@ docker start n8n       # http://localhost:5678
 - n8n 容器為永久容器（未加 `--rm`），workflow JSON 備份存放於 git 專案目錄外的 `React-Frontendproject/n8n-workflows/`，避免明文金鑰被 commit
 
 ---
+## 開發規劃樹狀圖
+
+> 圖例：✅ 已完成　🔄 開發中／待驗證　🔲 待辦
+
+```text
+智慧餐飲進銷存管理系統
+│
+├── 核心進銷存模組 ✅
+│   ├── 商品管理
+│   ├── 食材庫存
+│   ├── 採購進貨
+│   └── 銷售管理  
+│
+├── Dashboard 儀表板 ✅
+│   ├── 營收統計 / 近7天趨勢
+│   ├── 低庫存清單
+│   ├── 即期食材警告
+│   └── 商品毛利率排行
+│
+├── AI 自動化功能（n8n + NVIDIA NIM）
+│   ├── Agent A：AI 補貨建議 ✅
+│   │
+│   └── Agent B：智慧查詢助理
+│       ├── 架構：Tool-Calling 語意層
+│       │   （AI 選工具 → 固定邏輯運算 → AI 組回答）
+│       │
+│       ├── REVENUE_COMPARISON ✅
+│       ├── TOP_SELLING_PRODUCTS 🔄（驗證中）
+│       ├── UNKNOWN ✅
+│       ├── GENERAL_INVENTORY_QA 🔲
+│       │   ├── getInventoryStatus 🔲
+│       │   └── getProductSales 🔲
+│       │
+│       ├── 進階 KPI 工具（業界標準指標）
+│       │   ├── getFoodCostPercentage 🔲
+│       │   ├── getABCAnalysis 🔲
+│       │   └── getInventoryTurnover 🔲（待 stockLogs 資料累積）
+│       │
+│       └── Tool-Calling 架構遷移 🔲
+│           （由 Intent 分類 + if/else 改為治理過的工具選擇）
+│
+└── 資料完整性 🔲
+    └── stockLogs 寫入邏輯
+        ├── 銷售完成 → 依 recipe 扣減 ingredient.currentStock
+        └── 採購到貨 → 加回 ingredient.currentStock
+```
+---
 
 ## 🎨 設計系統
 

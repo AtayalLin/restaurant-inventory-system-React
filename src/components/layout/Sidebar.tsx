@@ -6,8 +6,11 @@ const NAV_ITEMS = [
   { to: '/inventory', label: '📦 食材庫存' },
   { to: '/purchase',  label: '🛒 採購進貨' },
   { to: '/sales',     label: '💰 銷售管理' },
+  { to: '/testing',   label: '🧪 併發測試' },
   { to: '/settings',  label: '⚙️ 系統設定' },
 ]
+// 【修正 Bug 5】補上「併發測試」導覽項目，放在銷售管理之後、系統設定之前，
+// 對應功能屬性（測試銷售流程），不放最前面避免搶走日常操作項目的視覺焦點
 
 function Sidebar() {
   return (
@@ -19,7 +22,6 @@ function Sidebar() {
       flexDirection: 'column',
       flexShrink: 0,
     }}>
-      {/* Logo */}
       <div style={{
         padding: '24px 20px',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
@@ -32,7 +34,6 @@ function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav style={{ flex: 1, padding: '16px 0' }}>
         {NAV_ITEMS.map(({ to, label }) => (
           <NavLink
@@ -54,7 +55,6 @@ function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
       <div style={{
         padding: '16px 20px',
         color: 'rgba(255,255,255,0.3)',

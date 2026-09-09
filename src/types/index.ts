@@ -48,15 +48,45 @@ export interface Ingredient {
   expiryDays: number | null
   costPerUnit: number
   createdAt: string
+  version: number // 【新增】樂觀鎖版本號，初始為 0，每次更新 +1
 }
 
 export interface StockLog {
-  id: ID
-  ingredientId: ID
-  type: 'IN' | 'OUT' | 'ADJUST' | 'WASTE'
-  quantity: number
-  note: string
+  id: string
+  ingredientId: string
+  changeType: 'SALE_DEDUCT' | 'PURCHASE_RECEIVE'
+  quantityChange: number      // 正數＝增加，負數＝減少
+  resultingStock: number      // 異動後的庫存數量
+  referenceType: 'SALES_ORDER' | 'PURCHASE_ORDER'
+  referenceId: string
   createdAt: string
+  testBatchId: string | null // 【新增】併發測試批號，非測試資料為 null
+}
+
+// 【新增】單一食材在這次測試中的快照
+export interface TestRunIngredientSnapshot {
+  ingredientId: string
+  ingredientName: string
+  originalStock: number   // 測試前的真實庫存，用於還原
+  originalVersion: number
+  testStock: number       // 依 capacity × recipe 用量算出的測試用庫存
+}
+
+// 【新增】一次併發測試的完整紀錄
+export interface TestRun {
+  id: string
+  productId: string
+  productName: string
+  ingredientSnapshots: TestRunIngredientSnapshot[]
+  testCapacity: number          // 預期可承受的訂單數（例如 5）
+  concurrentRequests: number    // 併發請求數（例如 100）
+  status: 'PREPARED' | 'RUNNING' | 'COMPLETED' | 'CLEANED'
+  successCount: number
+  failCount: number
+  finalStockSnapshots: { ingredientId: string; finalStock: number }[]
+  isOverSold: boolean            // finalStock < 0 → true，正常情況必須是 false
+  createdAt: string
+  completedAt: string | null
 }
 
 // ============================================================
@@ -109,6 +139,7 @@ export interface SalesItem {
   unitPrice: number
 }
 
+// 【修改】SalesOrder、StockLog 都加上可選的 testBatchId，用來標記併發測試產生的資料
 export interface SalesOrder {
   id: ID
   status: SalesStatus
@@ -120,6 +151,7 @@ export interface SalesOrder {
   channel: SalesChannel
   note: string
   createdAt: string
+  testBatchId: string | null // 【新增】併發測試批號，非測試資料為 null
 }
 
 // ============================================================
