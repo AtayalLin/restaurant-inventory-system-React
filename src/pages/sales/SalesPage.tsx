@@ -22,10 +22,10 @@ import type { SalesOrder } from '../../types'
 
 // ── 狀態顯示對照表 ────────────────────────────────────────
 const STATUS_CONFIG: Record<SalesOrder['status'], { label: string; color: string; bg: string }> = {
-  PENDING:   { label: '待出餐', color: '#D97706', bg: '#FEF3C7' },
-  PREPARING: { label: '準備中', color: '#2563EB', bg: '#DBEAFE' },
-  COMPLETED: { label: '已完成', color: '#16A34A', bg: '#DCFCE7' },
-  REFUNDED:  { label: '已退款', color: '#6B7280', bg: '#F3F4F6' },
+  PENDING:   { label: '待出餐', color: '#B45309', bg: '#FEF3C7' },
+  PREPARING: { label: '準備中', color: '#2B5287', bg: '#D9E4F1' },
+  COMPLETED: { label: '已完成', color: '#047857', bg: '#D1FAE5' },
+  REFUNDED:  { label: '已退款', color: '#6B7480', bg: '#EEF1F5' },
 }
 
 // ── 銷售渠道對照表 ────────────────────────────────────────
@@ -90,7 +90,7 @@ function SalesPage() {
   }
 
   if (isLoading) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>載入銷售資料中...</div>
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7480' }}>載入銷售資料中...</div>
   }
 
   return (
@@ -98,20 +98,20 @@ function SalesPage() {
       {/* ── 頁首 ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#1E3A5F' }}>銷售管理</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7280' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1B2532' }}>銷售管理</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7480' }}>
             共 {filtered.length} 筆訂單
             {pendingCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#D97706', fontWeight: 500 }}>
+              <span style={{ marginLeft: '12px', color: '#B45309', fontWeight: 500 }}>
                 🔔 {pendingCount} 筆待出餐
               </span>
             )}
             {preparingCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#2563EB', fontWeight: 500 }}>
+              <span style={{ marginLeft: '12px', color: '#2B5287', fontWeight: 500 }}>
                 👨‍🍳 {preparingCount} 筆準備中
               </span>
             )}
-            <span style={{ marginLeft: '12px', color: '#16A34A', fontWeight: 500 }}>
+            <span style={{ marginLeft: '12px', color: '#047857', fontWeight: 500 }}>
               💰 今日營收 NT$ {todayRevenue.toLocaleString()}
             </span>
           </p>
@@ -119,8 +119,8 @@ function SalesPage() {
         <button
           onClick={() => setModalOpen(true)}
           style={{
-            background: '#1E40AF', color: '#fff', border: 'none',
-            borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer',
+            background: '#1F3F6B', color: '#fff', border: 'none',
+            borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer',
           }}
         >
           ＋ 新增訂單
@@ -136,9 +136,9 @@ function SalesPage() {
             style={{
               padding: '6px 16px', borderRadius: '999px', fontSize: '13px',
               border: '1px solid', cursor: 'pointer',
-              borderColor: filterStatus === status ? '#1E40AF' : '#E5E7EB',
-              background: filterStatus === status ? '#EFF6FF' : '#fff',
-              color: filterStatus === status ? '#1E40AF' : '#6B7280',
+              borderColor: filterStatus === status ? '#1F3F6B' : '#E4E8EE',
+              background: filterStatus === status ? '#EEF3F9' : '#fff',
+              color: filterStatus === status ? '#1F3F6B' : '#6B7480',
               fontWeight: filterStatus === status ? 600 : 400,
             }}
           >
@@ -154,8 +154,8 @@ function SalesPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {filtered.length === 0 ? (
           <div style={{
-            background: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB',
-            padding: '40px', textAlign: 'center', color: '#9CA3AF',
+            background: '#fff', borderRadius: '12px', border: '1px solid #E4E8EE',
+            padding: '40px', textAlign: 'center', color: '#8A93A0',
           }}>
             沒有符合條件的訂單
           </div>
@@ -169,14 +169,14 @@ function SalesPage() {
 
             return (
               <div key={order.id} style={{
-                background: '#fff', borderRadius: '8px',
-                border: '1px solid #E5E7EB', padding: '20px',
+                background: '#fff', borderRadius: '12px',
+                border: '1px solid #E4E8EE', padding: '20px',
               }}>
                 {/* 訂單標題列 */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '13px', color: '#6B7280' }}>
+                      <span style={{ fontSize: '13px', color: '#6B7480' }}>
                         {CHANNEL_LABEL[order.channel]}
                       </span>
                       <span style={{
@@ -187,7 +187,7 @@ function SalesPage() {
                         {config.label}
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                    <div style={{ fontSize: '12px', color: '#8A93A0' }}>
                       {new Date(order.createdAt).toLocaleString('zh-TW')}
                     </div>
                   </div>
@@ -196,7 +196,7 @@ function SalesPage() {
                     <div style={{ fontSize: '18px', fontWeight: 700, color: '#1E3A5F' }}>
                       NT$ {order.total.toLocaleString()}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                    <div style={{ fontSize: '11px', color: '#8A93A0' }}>
                       小計 {order.subtotal} ＋ 稅 {order.taxAmount}
                       {order.discount > 0 && ` － 折扣 ${order.discount}`}
                     </div>
@@ -205,14 +205,14 @@ function SalesPage() {
 
                 {/* 訂單明細 */}
                 <div style={{
-                  background: '#F8FAFC', borderRadius: '6px',
+                  background: '#F5F7FA', borderRadius: '8px',
                   padding: '12px', marginBottom: '12px',
                 }}>
                   {order.items.map((item, idx) => (
                     <div key={idx} style={{
                       display: 'flex', justifyContent: 'space-between',
-                      fontSize: '13px', color: '#374151', padding: '4px 0',
-                      borderBottom: idx < order.items.length - 1 ? '1px solid #E5E7EB' : 'none',
+                      fontSize: '13px', color: '#4A5565', padding: '4px 0',
+                      borderBottom: idx < order.items.length - 1 ? '1px solid #E4E8EE' : 'none',
                     }}>
                       <span>{productMap.get(item.productId) ?? item.productId}</span>
                       {/* Week 3 優化：改成商品名稱，同 PurchasePage 的 ingredientMap 做法 */}
@@ -223,7 +223,7 @@ function SalesPage() {
 
                 {/* 備註 */}
                 {order.note && (
-                  <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 12px' }}>
+                  <p style={{ fontSize: '13px', color: '#6B7480', margin: '0 0 12px' }}>
                     備註：{order.note}
                   </p>
                 )}
@@ -231,7 +231,7 @@ function SalesPage() {
                 {/* 操作按鈕 */}
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                   {canPrepare && (
-                    <button onClick={() => handlePrepare(order)} style={btnStyle('#2563EB', '#DBEAFE')}>
+                    <button onClick={() => handlePrepare(order)} style={btnStyle('#2B5287', '#D9E4F1')}>
                       👨‍🍳 開始備餐
                     </button>
                   )}
@@ -239,18 +239,18 @@ function SalesPage() {
                     <button
                       onClick={() => handleComplete(order)}
                       disabled={isCompleting}
-                      style={btnStyle('#16A34A', '#DCFCE7')}
+                      style={btnStyle('#047857', '#D1FAE5')}
                     >
                       {isCompleting ? '處理中...' : '✓ 出餐完成'}
                     </button>
                   )}
                   {canCancel && (
-                    <button onClick={() => handleCancel(order)} style={btnStyle('#DC2626', '#FEE2E2')}>
+                    <button onClick={() => handleCancel(order)} style={btnStyle('#E11D48', '#FFE4E6')}>
                       ✕ 取消
                     </button>
                   )}
                   {canRefund && (
-                    <button onClick={() => handleRefund(order)} style={btnStyle('#6B7280', '#F3F4F6')}>
+                    <button onClick={() => handleRefund(order)} style={btnStyle('#6B7480', '#EEF1F5')}>
                       退款
                     </button>
                   )}
@@ -270,7 +270,7 @@ function SalesPage() {
 function btnStyle(color: string, bg: string): React.CSSProperties {
   return {
     padding: '6px 16px', fontSize: '13px',
-    border: `1px solid ${color}`, borderRadius: '6px',
+    border: `1px solid ${color}`, borderRadius: '8px',
     background: bg, color, cursor: 'pointer', fontWeight: 500,
   }
 }

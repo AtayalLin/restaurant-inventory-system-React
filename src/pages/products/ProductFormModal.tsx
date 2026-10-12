@@ -264,7 +264,7 @@ async function handleAIGenerate() {
           </h3>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7280' }}
+            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7480' }}
           >
             ✕
           </button>
@@ -276,7 +276,7 @@ async function handleAIGenerate() {
           {/* 商品名稱 */}
           <div style={{ marginBottom: '16px' }}>
             <label style={labelStyle}>
-              商品名稱 <span style={{ color: '#DC2626' }}>*</span>
+              商品名稱 <span style={{ color: '#E11D48' }}>*</span>
             </label>
             <input
               {...register('name')}
@@ -293,7 +293,7 @@ async function handleAIGenerate() {
           {/* 商品分類 */}
           <div style={{ marginBottom: '16px' }}>
             <label style={labelStyle}>
-              商品分類 <span style={{ color: '#DC2626' }}>*</span>
+              商品分類 <span style={{ color: '#E11D48' }}>*</span>
             </label>
             <select
               {...register('categoryId')}
@@ -310,7 +310,7 @@ async function handleAIGenerate() {
 {/* 售價 */}
 <div style={{ marginBottom: '16px' }}>
   <label style={labelStyle}>
-    售價（未稅）<span style={{ color: '#DC2626' }}>*</span>
+    售價（未稅）<span style={{ color: '#E11D48' }}>*</span>
   </label>
   {/* 為什麼用 wrapper div：input type="number" 不支援前綴文字，
       用相對定位的容器把 NT$ 疊在 input 左側 */}
@@ -321,7 +321,7 @@ async function handleAIGenerate() {
       top: '50%',
       transform: 'translateY(-50%)',
       fontSize: '14px',
-      color: '#6B7280',
+      color: '#6B7480',
       pointerEvents: 'none',  // 點擊穿透，不擋 input 操作
     }}>
       NT$
@@ -355,10 +355,10 @@ async function handleAIGenerate() {
       style={{
         padding: '4px 12px',
         fontSize: '12px',
-        border: '1px solid #7C3AED',
+        border: '1px solid #6A45D9',
         borderRadius: '4px',
-        background: isAIGenerating ? '#EDE9FE' : '#F5F3FF',
-        color: '#7C3AED',
+        background: isAIGenerating ? '#E9E3FD' : '#F4F1FE',
+        color: '#6A45D9',
         cursor: isAIGenerating || !watchedValues.name || !watchedValues.categoryId
           ? 'not-allowed' : 'pointer',
         display: 'flex',
@@ -390,7 +390,7 @@ async function handleAIGenerate() {
               id="isActive"
               style={{ width: '16px', height: '16px', cursor: 'pointer' }}
             />
-            <label htmlFor="isActive" style={{ fontSize: '14px', color: '#374151', cursor: 'pointer' }}>
+            <label htmlFor="isActive" style={{ fontSize: '14px', color: '#4A5565', cursor: 'pointer' }}>
               上架販售中
             </label>
           </div>
@@ -403,12 +403,12 @@ async function handleAIGenerate() {
               disabled={isPending}
               style={{
                 padding: '10px 20px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
+                border: '1px solid #E4E8EE',
+                borderRadius: '8px',
                 background: '#fff',
                 fontSize: '14px',
                 cursor: isPending ? 'not-allowed' : 'pointer',
-                color: '#374151',
+                color: '#4A5565',
               }}
             >
               取消
@@ -420,8 +420,8 @@ async function handleAIGenerate() {
               style={{
                 padding: '10px 20px',
                 border: 'none',
-                borderRadius: '6px',
-                background: isPending ? '#93C5FD' : '#1E40AF',
+                borderRadius: '8px',
+                background: isPending ? '#B4C8E2' : '#1F3F6B',
                 // 執行中顏色變淡，給使用者視覺回饋
                 fontSize: '14px',
                 cursor: isPending ? 'not-allowed' : 'pointer',
@@ -445,9 +445,9 @@ function inputStyle(hasError: boolean): React.CSSProperties {
   return {
     width: '100%',
     padding: '8px 12px',
-    border: `1px solid ${hasError ? '#DC2626' : '#E5E7EB'}`,
+    border: `1px solid ${hasError ? '#E11D48' : '#E4E8EE'}`,
     // hasError：true → 紅色邊框（危險色）；false → 灰色邊框（正常）
-    borderRadius: '6px',
+    borderRadius: '8px',
     fontSize: '14px',
     outline: 'none',
     boxSizing: 'border-box',
@@ -460,13 +460,13 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
   fontSize: '13px',
   fontWeight: 500,
-  color: '#374151',
+  color: '#4A5565',
 }
 
 const errorStyle: React.CSSProperties = {
   margin: '4px 0 0',
   fontSize: '12px',
-  color: '#DC2626',  // 危險色：對應設計系統
+  color: '#E11D48',  // 危險色：對應設計系統
 }
 
 export default ProductFormModal 

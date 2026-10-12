@@ -1,1 +1,57 @@
 @import "tailwindcss";
+
+/*
+ * ═══════════════════════════════════════════════════════════════
+ *  設計 token（Tailwind v4 @theme）
+ *  全站顏色、圓角、陰影都從這裡取用，例如 bg-brand-600、text-ai-600。
+ *  之後要換品牌色，只要改這裡，不用逐頁修改。
+ * ═══════════════════════════════════════════════════════════════
+ */
+@theme {
+  /* 品牌色：沿用側欄的深海軍藍，往淺色延伸成一組 */
+  --color-brand-50:  #EEF3F9;
+  --color-brand-100: #D9E4F1;
+  --color-brand-200: #B4C8E2;
+  --color-brand-500: #3B6BA5;
+  --color-brand-600: #2B5287;
+  --color-brand-700: #1F3F6B;
+  --color-brand-800: #1E3A5F;  /* 側欄底色 */
+  --color-brand-900: #152A45;
+
+  /* AI 功能專用色：所有 AI 按鈕、AI 回答都用這組，讓使用者一眼辨識「這是 AI 產生的」 */
+  --color-ai-50:  #F4F1FE;
+  --color-ai-100: #E9E3FD;
+  --color-ai-200: #D4C8FB;
+  --color-ai-500: #7C5CE6;
+  --color-ai-600: #6A45D9;
+  --color-ai-700: #5634B8;
+
+  /* 頁面底色與文字 */
+  --color-canvas: #F5F7FA;
+  --color-ink:    #1B2532;
+  --color-ink-2:  #4A5565;
+  --color-ink-3:  #6B7480;  /* 次要文字，對白底對比 4.8:1 */
+  --color-line:   #E4E8EE;
+
+  --radius-card: 0.875rem;
+  --shadow-card: 0 1px 2px rgb(27 37 50 / 0.04), 0 4px 16px -8px rgb(27 37 50 / 0.12);
+
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* 數字對齊：金額、數量用等寬數字，欄位上下對齊比較好讀 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

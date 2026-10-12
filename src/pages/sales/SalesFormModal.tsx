@@ -133,7 +133,7 @@ function SalesFormModal({ onClose }: Props) {
         {/* 標題列 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h3 style={{ margin: 0, fontSize: '18px', color: '#1E3A5F' }}>新增訂單</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7280' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7480' }}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -147,8 +147,8 @@ function SalesFormModal({ onClose }: Props) {
                   key={ch}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '8px 16px', border: '1px solid #E5E7EB',
-                    borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
+                    padding: '8px 16px', border: '1px solid #E4E8EE',
+                    borderRadius: '8px', cursor: 'pointer', fontSize: '14px',
                   }}
                 >
                   <input {...register('channel')} type="radio" value={ch} />
@@ -161,14 +161,14 @@ function SalesFormModal({ onClose }: Props) {
           {/* 訂單明細 */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={labelStyle}>訂單明細 <span style={{ color: '#DC2626' }}>*</span></label>
+              <label style={labelStyle}>訂單明細 <span style={{ color: '#E11D48' }}>*</span></label>
               <button
                 type="button"
                 onClick={() => append({ productId: '', quantity: 1, unitPrice: 0 })}
                 style={{
                   padding: '4px 12px', fontSize: '13px',
-                  border: '1px solid #1E40AF', borderRadius: '4px',
-                  background: '#EFF6FF', color: '#1E40AF', cursor: 'pointer',
+                  border: '1px solid #1F3F6B', borderRadius: '4px',
+                  background: '#EEF3F9', color: '#1F3F6B', cursor: 'pointer',
                 }}
               >
                 ＋ 新增品項
@@ -178,8 +178,8 @@ function SalesFormModal({ onClose }: Props) {
             {/* 表頭 */}
             <div style={{
               display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
-              gap: '8px', padding: '8px 0', borderBottom: '1px solid #E5E7EB',
-              fontSize: '12px', color: '#6B7280', fontWeight: 500,
+              gap: '8px', padding: '8px 0', borderBottom: '1px solid #E4E8EE',
+              fontSize: '12px', color: '#6B7480', fontWeight: 500,
             }}>
               <span>商品</span><span>數量</span><span>單價</span><span>小計</span><span></span>
             </div>
@@ -192,7 +192,7 @@ function SalesFormModal({ onClose }: Props) {
               return (
                 <div key={field.id} style={{
                   display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
-                  gap: '8px', padding: '8px 0', borderBottom: '1px solid #F3F4F6', alignItems: 'start',
+                  gap: '8px', padding: '8px 0', borderBottom: '1px solid #EEF1F5', alignItems: 'start',
                 }}>
                   {/* 商品選擇 */}
                   <div>
@@ -234,7 +234,7 @@ function SalesFormModal({ onClose }: Props) {
                   </div>
 
                   {/* 小計 */}
-                  <div style={{ padding: '8px 0', fontSize: '14px', color: '#374151', fontWeight: 500 }}>
+                  <div style={{ padding: '8px 0', fontSize: '14px', color: '#4A5565', fontWeight: 500 }}>
                     NT$ {(qty * price).toLocaleString()}
                   </div>
 
@@ -245,7 +245,7 @@ function SalesFormModal({ onClose }: Props) {
                     disabled={fields.length === 1}
                     style={{
                       padding: '6px', border: 'none', background: 'none',
-                      color: fields.length === 1 ? '#D1D5DB' : '#DC2626',
+                      color: fields.length === 1 ? '#CBD2DB' : '#E11D48',
                       cursor: fields.length === 1 ? 'not-allowed' : 'pointer', fontSize: '16px',
                     }}
                   >✕</button>
@@ -266,26 +266,26 @@ function SalesFormModal({ onClose }: Props) {
 
           {/* 金額明細 */}
           <div style={{
-            background: '#F8FAFC', borderRadius: '8px', padding: '16px',
+            background: '#F5F7FA', borderRadius: '12px', padding: '16px',
             marginBottom: '16px', fontSize: '14px',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6B7280' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6B7480' }}>
               <span>小計</span>
               <span>NT$ {subtotal.toLocaleString()}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6B7280' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6B7480' }}>
               <span>營業稅（5%，無條件捨去）</span>
               <span>NT$ {taxAmount.toLocaleString()}</span>
             </div>
             {discount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#DC2626' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#E11D48' }}>
                 <span>折扣</span>
                 <span>－ NT$ {discount.toLocaleString()}</span>
               </div>
             )}
             <div style={{
               display: 'flex', justifyContent: 'space-between',
-              paddingTop: '8px', borderTop: '1px solid #E5E7EB',
+              paddingTop: '8px', borderTop: '1px solid #E4E8EE',
               fontWeight: 700, fontSize: '16px', color: '#1E3A5F',
             }}>
               <span>總計</span>
@@ -307,15 +307,15 @@ function SalesFormModal({ onClose }: Props) {
             <button
               type="button" onClick={onClose} disabled={isPending}
               style={{
-                padding: '10px 20px', border: '1px solid #E5E7EB', borderRadius: '6px',
-                background: '#fff', fontSize: '14px', cursor: 'pointer', color: '#374151',
+                padding: '10px 20px', border: '1px solid #E4E8EE', borderRadius: '8px',
+                background: '#fff', fontSize: '14px', cursor: 'pointer', color: '#4A5565',
               }}
             >取消</button>
             <button
               type="submit" disabled={isPending}
               style={{
-                padding: '10px 20px', border: 'none', borderRadius: '6px',
-                background: isPending ? '#93C5FD' : '#1E40AF',
+                padding: '10px 20px', border: 'none', borderRadius: '8px',
+                background: isPending ? '#B4C8E2' : '#1F3F6B',
                 fontSize: '14px', cursor: isPending ? 'not-allowed' : 'pointer', color: '#fff',
               }}
             >
@@ -332,18 +332,18 @@ function SalesFormModal({ onClose }: Props) {
 function inputStyle(hasError: boolean): React.CSSProperties {
   return {
     width: '100%', padding: '7px 10px',
-    border: `1px solid ${hasError ? '#DC2626' : '#E5E7EB'}`,
-    borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+    border: `1px solid ${hasError ? '#E11D48' : '#E4E8EE'}`,
+    borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
   }
 }
 
 const labelStyle: React.CSSProperties = {
   display: 'block', marginBottom: '6px',
-  fontSize: '13px', fontWeight: 500, color: '#374151',
+  fontSize: '13px', fontWeight: 500, color: '#4A5565',
 }
 
 const errorStyle: React.CSSProperties = {
-  margin: '4px 0 0', fontSize: '12px', color: '#DC2626',
+  margin: '4px 0 0', fontSize: '12px', color: '#E11D48',
 }
 
 export default SalesFormModal

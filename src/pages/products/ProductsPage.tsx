@@ -106,7 +106,7 @@ function ProductsPage() {
   // ── 載入中狀態 ────────────────────────────────────────────
   if (productsLoading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>
+      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7480' }}>
         載入商品資料中...
       </div>
     )
@@ -118,18 +118,18 @@ function ProductsPage() {
       {/* ── 頁首：標題 + 新增按鈕 ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#1E3A5F' }}>商品列表</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7280' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1B2532' }}>商品列表</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7480' }}>
             共 {filtered.length} 筆商品
           </p>
         </div>
         <button
           onClick={handleAdd}
           style={{
-            background: '#1E40AF',  // 強調色：對應設計系統的按鈕主色
+            background: '#1F3F6B',  // 強調色：對應設計系統的按鈕主色
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '8px',
             padding: '10px 20px',
             fontSize: '14px',
             cursor: 'pointer',
@@ -150,8 +150,8 @@ function ProductsPage() {
           style={{
             flex: 1,
             padding: '8px 12px',
-            border: '1px solid #E5E7EB',
-            borderRadius: '6px',
+            border: '1px solid #E4E8EE',
+            borderRadius: '8px',
             fontSize: '14px',
             outline: 'none',
           }}
@@ -162,8 +162,8 @@ function ProductsPage() {
           // 選擇分類 → filterCategory 更新 → useMemo 重算 filtered
           style={{
             padding: '8px 12px',
-            border: '1px solid #E5E7EB',
-            borderRadius: '6px',
+            border: '1px solid #E4E8EE',
+            borderRadius: '8px',
             fontSize: '14px',
             background: '#fff',
             cursor: 'pointer',
@@ -179,19 +179,20 @@ function ProductsPage() {
       {/* ── 商品表格 ── */}
       <div style={{
         background: '#fff',
-        borderRadius: '8px',
-        border: '1px solid #E5E7EB',
+        borderRadius: '12px',
+        boxShadow: '0 1px 2px rgb(27 37 50 / 0.04), 0 4px 16px -8px rgb(27 37 50 / 0.12)',
+        border: '1px solid #E4E8EE',
         overflowX: 'auto',   // 小螢幕時表格在框內橫向捲動，同時保留圓角裁切
       }}>
         <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E5E7EB' }}>
+            <tr style={{ background: '#F5F7FA', borderBottom: '1px solid #E4E8EE' }}>
               {['商品名稱', '分類', '售價', '稅別', '狀態', '操作'].map(h => (
                 <th key={h} style={{
                   padding: '12px 16px',
                   textAlign: 'left',
                   fontSize: '13px',
-                  color: '#6B7280',
+                  color: '#6B7480',
                   fontWeight: 500,
                 }}>
                   {h}
@@ -203,7 +204,7 @@ function ProductsPage() {
             {filtered.length === 0 ? (
               // 空狀態：搜尋無結果或資料庫沒有商品
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>
+                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#8A93A0' }}>
                   沒有符合條件的商品
                 </td>
               </tr>
@@ -212,29 +213,29 @@ function ProductsPage() {
                 <tr
                   key={product.id}
                   style={{
-                    borderBottom: index < filtered.length - 1 ? '1px solid #E5E7EB' : 'none',
+                    borderBottom: index < filtered.length - 1 ? '1px solid #E4E8EE' : 'none',
                     // 最後一列不加底線，視覺更乾淨
                   }}
                 >
                   {/* 商品名稱 */}
-                  <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#111827' }}>
+                  <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#1B2532' }}>
                     {product.name}
                   </td>
 
                   {/* 分類：從 categoryMap 查 id 對應的名稱 */}
-                  <td style={{ padding: '14px 16px', fontSize: '14px', color: '#374151' }}>
+                  <td style={{ padding: '14px 16px', fontSize: '14px', color: '#4A5565' }}>
                     {categoryMap.get(product.categoryId) ?? '—'}
                     {/* ?? '—'：查不到分類時顯示破折號，避免顯示 undefined */}
                   </td>
 
                   {/* 售價 */}
-                  <td style={{ padding: '14px 16px', fontSize: '14px', color: '#374151' }}>
+                  <td style={{ padding: '14px 16px', fontSize: '14px', color: '#4A5565' }}>
                     NT$ {product.price.toLocaleString()}
                     {/* toLocaleString()：數字加千分位，例如 1000 → 1,000 */}
                   </td>
 
                   {/* 稅別 */}
-                  <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6B7280' }}>
+                  <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6B7480' }}>
                     {TAX_LABEL[product.taxType] ?? product.taxType}
                   </td>
 
@@ -247,8 +248,8 @@ function ProductsPage() {
                       fontSize: '12px',
                       fontWeight: 500,
                       // isActive 為 true → 綠色（正常販售）；false → 灰色（已下架）
-                      background: product.isActive ? '#DCFCE7' : '#F3F4F6',
-                      color: product.isActive ? '#16A34A' : '#6B7280',
+                      background: product.isActive ? '#D1FAE5' : '#EEF1F5',
+                      color: product.isActive ? '#047857' : '#6B7480',
                     }}>
                       {product.isActive ? '販售中' : '已下架'}
                     </span>
@@ -262,11 +263,11 @@ function ProductsPage() {
                         style={{
                           padding: '4px 12px',
                           fontSize: '13px',
-                          border: '1px solid #E5E7EB',
+                          border: '1px solid #E4E8EE',
                           borderRadius: '4px',
                           background: '#fff',
                           cursor: 'pointer',
-                          color: '#374151',
+                          color: '#4A5565',
                         }}
                       >
                         編輯
@@ -276,11 +277,11 @@ function ProductsPage() {
                         style={{
                           padding: '4px 12px',
                           fontSize: '13px',
-                          border: '1px solid #FCA5A5',
+                          border: '1px solid #FDA4AF',
                           borderRadius: '4px',
                           background: '#fff',
                           cursor: 'pointer',
-                          color: '#DC2626',  // 危險色：對應設計系統
+                          color: '#E11D48',  // 危險色：對應設計系統
                         }}
                       >
                         刪除

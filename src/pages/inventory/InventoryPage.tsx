@@ -27,14 +27,14 @@ function getStockStatus(ingredient: Ingredient): {
   bg: string
 } {
   if (ingredient.currentStock <= 0) {
-    return { label: '已缺貨', color: '#DC2626', bg: '#FEE2E2' }
+    return { label: '已缺貨', color: '#E11D48', bg: '#FFE4E6' }
     // 危險色：庫存歸零，需要緊急補貨
   }
   if (ingredient.currentStock < ingredient.safetyStock) {
-    return { label: '庫存不足', color: '#D97706', bg: '#FEF3C7' }
+    return { label: '庫存不足', color: '#B45309', bg: '#FEF3C7' }
     // 警告色：低於安全庫存量，需要注意
   }
-  return { label: '庫存正常', color: '#16A34A', bg: '#DCFCE7' }
+  return { label: '庫存正常', color: '#047857', bg: '#D1FAE5' }
   // 成功色：庫存充足
 }
 
@@ -149,7 +149,7 @@ function InventoryPage() {
   // ── 載入中狀態 ────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>
+      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7480' }}>
         載入食材資料中...
       </div>
     )
@@ -161,8 +161,8 @@ function InventoryPage() {
       {/* ── 頁首 ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#1E3A5F' }}>食材庫存管理</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7280' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1B2532' }}>食材庫存管理</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7480' }}>
             共 {filtered.length} 筆食材
             {lowStockCount > 0 && (
               <span style={{ marginLeft: '12px', color: '#B45309', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}>
@@ -175,10 +175,10 @@ function InventoryPage() {
         <button
           onClick={handleAdd}
           style={{
-            background: '#1E40AF',
+            background: '#1F3F6B',
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '8px',
             padding: '10px 20px',
             fontSize: '14px',
             cursor: 'pointer',
@@ -199,8 +199,8 @@ function InventoryPage() {
             flex: 1,
             minWidth: '200px',
             padding: '8px 12px',
-            border: '1px solid #E5E7EB',
-            borderRadius: '6px',
+            border: '1px solid #E4E8EE',
+            borderRadius: '8px',
             fontSize: '14px',
             outline: 'none',
           }}
@@ -230,19 +230,20 @@ function InventoryPage() {
       {/* ── 食材表格 ── */}
       <div style={{
         background: '#fff',
-        borderRadius: '8px',
-        border: '1px solid #E5E7EB',
+        borderRadius: '12px',
+        boxShadow: '0 1px 2px rgb(27 37 50 / 0.04), 0 4px 16px -8px rgb(27 37 50 / 0.12)',
+        border: '1px solid #E4E8EE',
         overflowX: 'auto',   // 小螢幕時表格在框內橫向捲動，同時保留圓角裁切
       }}>
         <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E5E7EB' }}>
+            <tr style={{ background: '#F5F7FA', borderBottom: '1px solid #E4E8EE' }}>
               {['食材名稱', '分類', '現有庫存', '安全庫存', '供應商', '效期', '庫存狀態', '操作'].map(h => (
                 <th key={h} style={{
                   padding: '12px 16px',
                   textAlign: 'left',
                   fontSize: '13px',
-                  color: '#6B7280',
+                  color: '#6B7480',
                   fontWeight: 500,
                   whiteSpace: 'nowrap',
                 }}>
@@ -254,7 +255,7 @@ function InventoryPage() {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>
+                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#8A93A0' }}>
                   沒有符合條件的食材
                 </td>
               </tr>
@@ -268,7 +269,7 @@ function InventoryPage() {
                   <tr
                     key={ingredient.id}
                     style={{
-                      borderBottom: index < filtered.length - 1 ? '1px solid #E5E7EB' : 'none',
+                      borderBottom: index < filtered.length - 1 ? '1px solid #E4E8EE' : 'none',
                       background: ingredient.currentStock < ingredient.safetyStock
                         ? 'rgba(251, 191, 36, 0.03)'
                         : 'transparent',
@@ -276,12 +277,12 @@ function InventoryPage() {
                     }}
                   >
                     {/* 食材名稱 */}
-                    <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#111827' }}>
+                    <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#1B2532' }}>
                       {ingredient.name}
                     </td>
 
                     {/* 分類 */}
-                    <td style={{ padding: '14px 16px', fontSize: '14px', color: '#374151' }}>
+                    <td style={{ padding: '14px 16px', fontSize: '14px', color: '#4A5565' }}>
                       {ingredient.category}
                     </td>
 
@@ -290,18 +291,18 @@ function InventoryPage() {
                       padding: '14px 16px',
                       fontSize: '14px',
                       fontWeight: 500,
-                      color: ingredient.currentStock < ingredient.safetyStock ? '#D97706' : '#111827',
+                      color: ingredient.currentStock < ingredient.safetyStock ? '#B45309' : '#1B2532',
                     }}>
                       {ingredient.currentStock.toLocaleString()} {ingredient.unit}
                     </td>
 
                     {/* 安全庫存 */}
-                    <td style={{ padding: '14px 16px', fontSize: '14px', color: '#6B7280' }}>
+                    <td style={{ padding: '14px 16px', fontSize: '14px', color: '#6B7480' }}>
                       {ingredient.safetyStock.toLocaleString()} {ingredient.unit}
                     </td>
 
                     {/* 供應商：從 supplierMap 查 id 對應的名稱 */}
-                    <td style={{ padding: '14px 16px', fontSize: '14px', color: '#374151' }}>
+                    <td style={{ padding: '14px 16px', fontSize: '14px', color: '#4A5565' }}>
                       {ingredient.supplierId
                         ? supplierMap.get(ingredient.supplierId) ?? '—'
                         : '—'
@@ -312,9 +313,9 @@ function InventoryPage() {
                     {/* 效期 */}
                     <td style={{ padding: '14px 16px', fontSize: '13px' }}>
                       {ingredient.expiryDays === null ? (
-                        <span style={{ color: '#9CA3AF' }}>無限制</span>
+                        <span style={{ color: '#8A93A0' }}>無限制</span>
                       ) : (
-                        <span style={{ color: expiryWarning ? '#DC2626' : '#374151' }}>
+                        <span style={{ color: expiryWarning ? '#E11D48' : '#4A5565' }}>
                           {ingredient.expiryDays} 天
                           {expiryWarning && ` (${expiryWarning})`}
                           {/* 短效期時顯示警示文字 */}
@@ -377,8 +378,8 @@ function InventoryPage() {
 // ── 共用樣式 ──────────────────────────────────────────────────
 const selectStyle: React.CSSProperties = {
   padding: '8px 12px',
-  border: '1px solid #E5E7EB',
-  borderRadius: '6px',
+  border: '1px solid #E4E8EE',
+  borderRadius: '8px',
   fontSize: '14px',
   background: '#fff',
   cursor: 'pointer',
@@ -387,21 +388,21 @@ const selectStyle: React.CSSProperties = {
 const editBtnStyle: React.CSSProperties = {
   padding: '4px 12px',
   fontSize: '13px',
-  border: '1px solid #E5E7EB',
+  border: '1px solid #E4E8EE',
   borderRadius: '4px',
   background: '#fff',
   cursor: 'pointer',
-  color: '#374151',
+  color: '#4A5565',
 }
 
 const deleteBtnStyle: React.CSSProperties = {
   padding: '4px 12px',
   fontSize: '13px',
-  border: '1px solid #FCA5A5',
+  border: '1px solid #FDA4AF',
   borderRadius: '4px',
   background: '#fff',
   cursor: 'pointer',
-  color: '#DC2626',
+  color: '#E11D48',
 }
 
 export default InventoryPage

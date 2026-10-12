@@ -12,11 +12,9 @@ import { useSalesOrders } from './useSalesOrders'
 /**
  * 已知技術債清單（依優先度排序，供之後有空時處理）：
  *
- * 1. API 端點目前寫死在各 hook 檔案裡（BASE = '/api'、N8N_RESTOCK_URL 等）。
- *    正式部署到不同環境（開發/正式）時，這些應該搬進 .env 用環境變數管理。
+ * 1. ~~API 端點寫死在各 hook 檔案裡~~（已完成：集中於 src/lib/config.ts，可用 .env 覆寫）
  *
- * 2. Dashboard.tsx 檔案過大（150+ 行），混雜了統計卡片、圖表、低庫存卡片、
- *    毛利表格等多個職責，建議拆成 src/components/dashboard/ 底下的獨立元件。
+ * 2. ~~Dashboard.tsx 檔案過大~~（已完成：拆成 src/components/dashboard/ 與 src/components/ui/）
  *
  * 3. useDashboard.ts 的到期警告門檻寫死 7 天（EXPIRY_WARNING_DAYS 常數），
  *    但 types/index.ts 的 SystemSettings 已經定義了 expiryWarningDays 欄位，
@@ -59,6 +57,11 @@ export interface RevenueStats {
   monthRevenue: number
   orderCount: number
   avgOrderValue: number
+  // 【新增】比較基準：讓儀表板可以顯示「比上一期 ±%」，數字才有意義
+  yesterdayRevenue: number   // 昨日全天營收（對照今日）
+  prevWeekRevenue: number    // 前一個 7 天區間營收（對照本週）
+  prevMonthRevenue: number   // 上個月「同期」營收：上月 1 號到上月的今天（對照本月至今）
+  todayOrderCount: number    // 今日完成訂單數
 }
 
 export interface DailyTrend {
@@ -93,19 +96,25 @@ export function useDashboard() {
     data: products = [],
     isLoading: productsLoading,
     isError: productsError,
+    dataUpdatedAt: productsUpdatedAt,
   } = useProducts(autoRefreshOptions)
 
   const {
     data: ingredients = [],
     isLoading: ingredientsLoading,
     isError: ingredientsError,
+    dataUpdatedAt: ingredientsUpdatedAt,
   } = useIngredients(autoRefreshOptions)
 
   const {
     data: salesOrders = [],
     isLoading: salesLoading,
     isError: salesError,
+    dataUpdatedAt: salesUpdatedAt,
   } = useSalesOrders(autoRefreshOptions)
+
+  // 【新增】最後更新時間：取三個資料來源中最新的一次，顯示在儀表板標題旁
+  const updatedAt = Math.max(productsUpdatedAt, ingredientsUpdatedAt, salesUpdatedAt)
 
   const isLoading = productsLoading || ingredientsLoading || salesLoading
 
@@ -183,20 +192,40 @@ export function useDashboard() {
 
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    // 近 7 天＝今天往前推 6 天（含今天共 7 天），與下方「近 7 天銷售趨勢」圖表的區間一致
+    // 【修正】原本減 7 天，實際涵蓋 8 天，導致統計卡和趨勢圖的 7 天合計對不起來
     const weekStart = new Date(todayStart)
-    weekStart.setDate(weekStart.getDate() - 7)
+    weekStart.setDate(weekStart.getDate() - 6)
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    // 比較區間：與本期等長、緊接在本期之前
+    const yesterdayStart = new Date(todayStart)
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+    const prevWeekStart = new Date(weekStart)
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7)
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    // 上月同期的結束點：上個月的「今天此刻」，月底日期不存在時自動落在上月最後一天
+    const prevMonthSameDay = new Date(prevMonthStart)
+    prevMonthSameDay.setDate(Math.min(now.getDate(), new Date(now.getFullYear(), now.getMonth(), 0).getDate()))
+    prevMonthSameDay.setHours(now.getHours(), now.getMinutes(), now.getSeconds())
 
     let todayRevenue = 0
     let weekRevenue = 0
     let monthRevenue = 0
+    let yesterdayRevenue = 0
+    let prevWeekRevenue = 0
+    let prevMonthRevenue = 0
+    let todayOrderCount = 0
     let totalRevenue = 0 // 新增：在同一次迴圈裡順便累加全部已完成訂單的總營收，用來算平均客單價
 
     completedOrders.forEach(order => {
       const orderDate = new Date(order.createdAt)
-      if (orderDate >= todayStart) todayRevenue += order.total
+      if (orderDate >= todayStart) { todayRevenue += order.total; todayOrderCount++ }
+      else if (orderDate >= yesterdayStart) yesterdayRevenue += order.total
       if (orderDate >= weekStart) weekRevenue += order.total
+      else if (orderDate >= prevWeekStart) prevWeekRevenue += order.total
       if (orderDate >= monthStart) monthRevenue += order.total
+      else if (orderDate >= prevMonthStart && orderDate <= prevMonthSameDay) prevMonthRevenue += order.total
       totalRevenue += order.total
     })
 
@@ -205,7 +234,10 @@ export function useDashboard() {
       ? Math.round(totalRevenue / orderCount)
       : 0
 
-    return { todayRevenue, weekRevenue, monthRevenue, orderCount, avgOrderValue }
+    return {
+      todayRevenue, weekRevenue, monthRevenue, orderCount, avgOrderValue,
+      yesterdayRevenue, prevWeekRevenue, prevMonthRevenue, todayOrderCount,
+    }
   }, [salesOrders])
 
   // ── 近 7 天銷售趨勢 ──────────────────────────────────────
@@ -240,5 +272,6 @@ export function useDashboard() {
     productMargins,
     revenueStats,
     dailyTrend,
+    updatedAt,
   }
 }

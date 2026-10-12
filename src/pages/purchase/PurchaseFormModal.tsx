@@ -172,7 +172,7 @@ function PurchaseFormModal({ onClose }: Props) {
         {/* 標題列 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h3 style={{ margin: 0, fontSize: '18px', color: '#1E3A5F' }}>建立採購單</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7280' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7480' }}>
             ✕
           </button>
         </div>
@@ -181,7 +181,7 @@ function PurchaseFormModal({ onClose }: Props) {
 
           {/* 供應商 */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>供應商 <span style={{ color: '#DC2626' }}>*</span></label>
+            <label style={labelStyle}>供應商 <span style={{ color: '#E11D48' }}>*</span></label>
             <select {...register('supplierId')} style={inputStyle(!!errors.supplierId)}>
               <option value="">請選擇供應商</option>
               {suppliers.map(s => (
@@ -208,7 +208,7 @@ function PurchaseFormModal({ onClose }: Props) {
           {/* 採購明細 */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={labelStyle}>採購明細 <span style={{ color: '#DC2626' }}>*</span></label>
+              <label style={labelStyle}>採購明細 <span style={{ color: '#E11D48' }}>*</span></label>
               <button
                 type="button"
                 onClick={() => append({ ingredientId: '', quantity: 1, unitPrice: 0 })}
@@ -216,10 +216,10 @@ function PurchaseFormModal({ onClose }: Props) {
                 style={{
                   padding: '4px 12px',
                   fontSize: '13px',
-                  border: '1px solid #1E40AF',
+                  border: '1px solid #1F3F6B',
                   borderRadius: '4px',
-                  background: '#EFF6FF',
-                  color: '#1E40AF',
+                  background: '#EEF3F9',
+                  color: '#1F3F6B',
                   cursor: 'pointer',
                 }}
               >
@@ -233,9 +233,9 @@ function PurchaseFormModal({ onClose }: Props) {
               gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
               gap: '8px',
               padding: '8px 0',
-              borderBottom: '1px solid #E5E7EB',
+              borderBottom: '1px solid #E4E8EE',
               fontSize: '12px',
-              color: '#6B7280',
+              color: '#6B7480',
               fontWeight: 500,
             }}>
               <span>食材</span>
@@ -262,7 +262,7 @@ function PurchaseFormModal({ onClose }: Props) {
                     gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
                     gap: '8px',
                     padding: '8px 0',
-                    borderBottom: '1px solid #F3F4F6',
+                    borderBottom: '1px solid #EEF1F5',
                     alignItems: 'start',
                   }}
                 >
@@ -314,7 +314,7 @@ function PurchaseFormModal({ onClose }: Props) {
                   </div>
 
                   {/* 小計 */}
-                  <div style={{ padding: '8px 0', fontSize: '14px', color: '#374151', fontWeight: 500 }}>
+                  <div style={{ padding: '8px 0', fontSize: '14px', color: '#4A5565', fontWeight: 500 }}>
                     NT$ {subtotal.toLocaleString()}
                   </div>
 
@@ -328,7 +328,7 @@ function PurchaseFormModal({ onClose }: Props) {
                       padding: '6px',
                       border: 'none',
                       background: 'none',
-                      color: fields.length === 1 ? '#D1D5DB' : '#DC2626',
+                      color: fields.length === 1 ? '#CBD2DB' : '#E11D48',
                       cursor: fields.length === 1 ? 'not-allowed' : 'pointer',
                       fontSize: '16px',
                     }}
@@ -351,10 +351,10 @@ function PurchaseFormModal({ onClose }: Props) {
             alignItems: 'center',
             gap: '12px',
             padding: '12px 0',
-            borderTop: '2px solid #E5E7EB',
+            borderTop: '2px solid #E4E8EE',
             marginBottom: '16px',
           }}>
-            <span style={{ fontSize: '14px', color: '#6B7280' }}>採購總金額</span>
+            <span style={{ fontSize: '14px', color: '#6B7480' }}>採購總金額</span>
             <span style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F' }}>
               NT$ {totalAmount.toLocaleString()}
             </span>
@@ -379,12 +379,12 @@ function PurchaseFormModal({ onClose }: Props) {
               disabled={isPending}
               style={{
                 padding: '10px 20px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
+                border: '1px solid #E4E8EE',
+                borderRadius: '8px',
                 background: '#fff',
                 fontSize: '14px',
                 cursor: 'pointer',
-                color: '#374151',
+                color: '#4A5565',
               }}
             >
               取消
@@ -395,8 +395,8 @@ function PurchaseFormModal({ onClose }: Props) {
               style={{
                 padding: '10px 20px',
                 border: 'none',
-                borderRadius: '6px',
-                background: isPending ? '#93C5FD' : '#1E40AF',
+                borderRadius: '8px',
+                background: isPending ? '#B4C8E2' : '#1F3F6B',
                 fontSize: '14px',
                 cursor: isPending ? 'not-allowed' : 'pointer',
                 color: '#fff',
@@ -416,8 +416,8 @@ function inputStyle(hasError: boolean): React.CSSProperties {
   return {
     width: '100%',
     padding: '7px 10px',
-    border: `1px solid ${hasError ? '#DC2626' : '#E5E7EB'}`,
-    borderRadius: '6px',
+    border: `1px solid ${hasError ? '#E11D48' : '#E4E8EE'}`,
+    borderRadius: '8px',
     fontSize: '13px',
     outline: 'none',
     boxSizing: 'border-box',
@@ -429,13 +429,13 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
   fontSize: '13px',
   fontWeight: 500,
-  color: '#374151',
+  color: '#4A5565',
 }
 
 const errorStyle: React.CSSProperties = {
   margin: '4px 0 0',
   fontSize: '12px',
-  color: '#DC2626',
+  color: '#E11D48',
 }
 
 export default PurchaseFormModal

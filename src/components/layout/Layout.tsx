@@ -9,7 +9,7 @@ function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-canvas">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         {/* min-w-0：讓內容區可以縮小，寬表格才會在內部橫向捲動，而不是撐破整頁 */}

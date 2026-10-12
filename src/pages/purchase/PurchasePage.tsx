@@ -33,13 +33,13 @@ const STATUS_CONFIG: Record<PurchaseOrder['status'], {
   color: string
   bg: string
 }> = {
-  PENDING:   { label: '待確認', color: '#D97706', bg: '#FEF3C7' },
+  PENDING:   { label: '待確認', color: '#B45309', bg: '#FEF3C7' },
   // 待確認：剛建立，尚未向供應商下單
-  ORDERED:   { label: '已下單', color: '#2563EB', bg: '#DBEAFE' },
+  ORDERED:   { label: '已下單', color: '#2B5287', bg: '#D9E4F1' },
   // 已下單：已通知供應商，等待送達
-  RECEIVED:  { label: '已收貨', color: '#16A34A', bg: '#DCFCE7' },
+  RECEIVED:  { label: '已收貨', color: '#047857', bg: '#D1FAE5' },
   // 已收貨：貨品已到，庫存已更新
-  CANCELLED: { label: '已取消', color: '#6B7280', bg: '#F3F4F6' },
+  CANCELLED: { label: '已取消', color: '#6B7480', bg: '#EEF1F5' },
   // 已取消：訂單作廢
 }
 
@@ -114,7 +114,7 @@ function PurchasePage() {
   // ── 載入中 ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>
+      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7480' }}>
         載入採購資料中...
       </div>
     )
@@ -126,16 +126,16 @@ function PurchasePage() {
       {/* ── 頁首 ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#1E3A5F' }}>採購進貨管理</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7280' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1B2532' }}>採購進貨管理</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7480' }}>
             共 {filtered.length} 筆採購單
             {pendingCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#D97706', fontWeight: 500 }}>
+              <span style={{ marginLeft: '12px', color: '#B45309', fontWeight: 500 }}>
                 ⏳ {pendingCount} 筆待確認
               </span>
             )}
             {orderedCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#2563EB', fontWeight: 500 }}>
+              <span style={{ marginLeft: '12px', color: '#2B5287', fontWeight: 500 }}>
                 🚚 {orderedCount} 筆待收貨
               </span>
             )}
@@ -144,10 +144,10 @@ function PurchasePage() {
         <button
           onClick={() => setModalOpen(true)}
           style={{
-            background: '#1E40AF',
+            background: '#1F3F6B',
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '8px',
             padding: '10px 20px',
             fontSize: '14px',
             cursor: 'pointer',
@@ -170,9 +170,9 @@ function PurchasePage() {
               fontSize: '13px',
               border: '1px solid',
               cursor: 'pointer',
-              borderColor: filterStatus === status ? '#1E40AF' : '#E5E7EB',
-              background: filterStatus === status ? '#EFF6FF' : '#fff',
-              color: filterStatus === status ? '#1E40AF' : '#6B7280',
+              borderColor: filterStatus === status ? '#1F3F6B' : '#E4E8EE',
+              background: filterStatus === status ? '#EEF3F9' : '#fff',
+              color: filterStatus === status ? '#1F3F6B' : '#6B7480',
               fontWeight: filterStatus === status ? 600 : 400,
               // 選中的篩選按鈕加粗+藍色，未選中灰色
             }}
@@ -194,11 +194,11 @@ function PurchasePage() {
         {filtered.length === 0 ? (
           <div style={{
             background: '#fff',
-            borderRadius: '8px',
-            border: '1px solid #E5E7EB',
+            borderRadius: '12px',
+            border: '1px solid #E4E8EE',
             padding: '40px',
             textAlign: 'center',
-            color: '#9CA3AF',
+            color: '#8A93A0',
           }}>
             沒有符合條件的採購單
           </div>
@@ -216,8 +216,8 @@ function PurchasePage() {
                 key={order.id}
                 style={{
                   background: '#fff',
-                  borderRadius: '8px',
-                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  border: '1px solid #E4E8EE',
                   padding: '20px',
                 }}
               >
@@ -225,7 +225,7 @@ function PurchasePage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#1B2532' }}>
                         {supplierName}
                       </span>
                       {/* 狀態 Badge */}
@@ -240,7 +240,7 @@ function PurchasePage() {
                         {config.label}
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                    <div style={{ fontSize: '12px', color: '#8A93A0' }}>
                       建立：{new Date(order.createdAt).toLocaleDateString('zh-TW')}
                       {order.expectedDate && (
                         <span style={{ marginLeft: '12px' }}>
@@ -248,7 +248,7 @@ function PurchasePage() {
                         </span>
                       )}
                       {order.receivedDate && (
-                        <span style={{ marginLeft: '12px', color: '#16A34A' }}>
+                        <span style={{ marginLeft: '12px', color: '#047857' }}>
                           實際收貨：{new Date(order.receivedDate).toLocaleDateString('zh-TW')}
                         </span>
                       )}
@@ -259,7 +259,7 @@ function PurchasePage() {
                     <div style={{ fontSize: '18px', fontWeight: 700, color: '#1E3A5F' }}>
                       NT$ {order.totalAmount.toLocaleString()}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                    <div style={{ fontSize: '12px', color: '#8A93A0' }}>
                       {order.items.length} 項食材
                     </div>
                   </div>
@@ -267,8 +267,8 @@ function PurchasePage() {
 
                 {/* 明細列表 */}
                 <div style={{
-                  background: '#F8FAFC',
-                  borderRadius: '6px',
+                  background: '#F5F7FA',
+                  borderRadius: '8px',
                   padding: '12px',
                   marginBottom: '12px',
                 }}>
@@ -279,9 +279,9 @@ function PurchasePage() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         fontSize: '13px',
-                        color: '#374151',
+                        color: '#4A5565',
                         padding: '4px 0',
-                        borderBottom: idx < order.items.length - 1 ? '1px solid #E5E7EB' : 'none',
+                        borderBottom: idx < order.items.length - 1 ? '1px solid #E4E8EE' : 'none',
                       }}
                     >
                       <span>{ingredientMap.get(item.ingredientId) ?? item.ingredientId}</span>
@@ -296,7 +296,7 @@ function PurchasePage() {
 
                 {/* 備註 */}
                 {order.note && (
-                  <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 12px' }}>
+                  <p style={{ fontSize: '13px', color: '#6B7480', margin: '0 0 12px' }}>
                     備註：{order.note}
                   </p>
                 )}
@@ -306,7 +306,7 @@ function PurchasePage() {
                   {canConfirm && (
                     <button
                       onClick={() => handleConfirmOrder(order)}
-                      style={actionBtnStyle('#2563EB', '#DBEAFE')}
+                      style={actionBtnStyle('#2B5287', '#D9E4F1')}
                     >
                       ✓ 確認下單
                     </button>
@@ -315,7 +315,7 @@ function PurchasePage() {
                     <button
                       onClick={() => handleReceiveOrder(order)}
                       disabled={isReceiving}
-                      style={actionBtnStyle('#16A34A', '#DCFCE7')}
+                      style={actionBtnStyle('#047857', '#D1FAE5')}
                     >
                       {isReceiving ? '處理中...' : '📦 確認收貨'}
                     </button>
@@ -323,7 +323,7 @@ function PurchasePage() {
                   {canCancel && (
                     <button
                       onClick={() => handleCancelOrder(order)}
-                      style={actionBtnStyle('#DC2626', '#FEE2E2')}
+                      style={actionBtnStyle('#E11D48', '#FFE4E6')}
                     >
                       ✕ 取消
                     </button>
@@ -351,7 +351,7 @@ function actionBtnStyle(color: string, bg: string): React.CSSProperties {
     padding: '6px 16px',
     fontSize: '13px',
     border: `1px solid ${color}`,
-    borderRadius: '6px',
+    borderRadius: '8px',
     background: bg,
     color: color,
     cursor: 'pointer',

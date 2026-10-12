@@ -192,7 +192,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
           </h3>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7280' }}
+            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7480' }}
           >
             ✕
           </button>
@@ -203,7 +203,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
           {/* 第一列：名稱 + 單位 */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <label style={labelStyle}>食材名稱 <span style={{ color: '#DC2626' }}>*</span></label>
+              <label style={labelStyle}>食材名稱 <span style={{ color: '#E11D48' }}>*</span></label>
               <input
                 {...register('name')}
                 placeholder="例：牛腱肉"
@@ -212,7 +212,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
               {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
             </div>
             <div>
-              <label style={labelStyle}>單位 <span style={{ color: '#DC2626' }}>*</span></label>
+              <label style={labelStyle}>單位 <span style={{ color: '#E11D48' }}>*</span></label>
               <input
                 {...register('unit')}
                 placeholder="例：g、個"
@@ -224,7 +224,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
 
           {/* 分類 */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>分類 <span style={{ color: '#DC2626' }}>*</span></label>
+            <label style={labelStyle}>分類 <span style={{ color: '#E11D48' }}>*</span></label>
             <input
               {...register('category')}
               placeholder="例：肉類、乾貨、飲料原料"
@@ -247,7 +247,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
           {/* 第二列：現有庫存 + 安全庫存 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <label style={labelStyle}>現有庫存 <span style={{ color: '#DC2626' }}>*</span></label>
+              <label style={labelStyle}>現有庫存 <span style={{ color: '#E11D48' }}>*</span></label>
               <input
                 {...register('currentStock', { valueAsNumber: true })}
                 type="number"
@@ -259,7 +259,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
               {errors.currentStock && <p style={errorStyle}>{errors.currentStock.message}</p>}
             </div>
             <div>
-              <label style={labelStyle}>安全庫存 <span style={{ color: '#DC2626' }}>*</span></label>
+              <label style={labelStyle}>安全庫存 <span style={{ color: '#E11D48' }}>*</span></label>
               <input
                 {...register('safetyStock', { valueAsNumber: true })}
                 type="number"
@@ -310,12 +310,12 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
               disabled={isPending}
               style={{
                 padding: '10px 20px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
+                border: '1px solid #E4E8EE',
+                borderRadius: '8px',
                 background: '#fff',
                 fontSize: '14px',
                 cursor: isPending ? 'not-allowed' : 'pointer',
-                color: '#374151',
+                color: '#4A5565',
               }}
             >
               取消
@@ -326,8 +326,8 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
               style={{
                 padding: '10px 20px',
                 border: 'none',
-                borderRadius: '6px',
-                background: isPending ? '#93C5FD' : '#1E40AF',
+                borderRadius: '8px',
+                background: isPending ? '#B4C8E2' : '#1F3F6B',
                 fontSize: '14px',
                 cursor: isPending ? 'not-allowed' : 'pointer',
                 color: '#fff',
@@ -347,8 +347,8 @@ function inputStyle(hasError: boolean): React.CSSProperties {
   return {
     width: '100%',
     padding: '8px 12px',
-    border: `1px solid ${hasError ? '#DC2626' : '#E5E7EB'}`,
-    borderRadius: '6px',
+    border: `1px solid ${hasError ? '#E11D48' : '#E4E8EE'}`,
+    borderRadius: '8px',
     fontSize: '14px',
     outline: 'none',
     boxSizing: 'border-box',
@@ -360,13 +360,13 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
   fontSize: '13px',
   fontWeight: 500,
-  color: '#374151',
+  color: '#4A5565',
 }
 
 const errorStyle: React.CSSProperties = {
   margin: '4px 0 0',
   fontSize: '12px',
-  color: '#DC2626',
+  color: '#E11D48',
 }
 
 export default IngredientFormModal
