@@ -1,8 +1,9 @@
 import { fetchJSON } from './fetchJSON'
 import { applyStockChangeWithLock } from './stockOperations'
 import type { SalesOrder, Product, Ingredient } from '../types'
+import { API_BASE } from './config'
 
-const BASE = '/api'
+const BASE = API_BASE
 
 // 從 useSalesOrders.ts 的 useCompleteSalesOrder 抽出來的核心邏輯
 // 正式下單流程和併發測試，必須呼叫同一份程式碼

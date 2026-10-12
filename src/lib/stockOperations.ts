@@ -1,7 +1,8 @@
 import { fetchJSON } from './fetchJSON'
 import type { Ingredient, StockLog } from '../types'
+import { API_BASE } from './config'
 
-const BASE = '/api'
+const BASE = API_BASE
 const MAX_LOCK_RETRIES = 3
 
 interface StockChangeMeta {

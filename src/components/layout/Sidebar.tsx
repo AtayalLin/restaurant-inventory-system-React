@@ -1,69 +1,103 @@
 import { NavLink } from 'react-router-dom'
+import {
+  LayoutDashboard, UtensilsCrossed, Package, ShoppingCart, Receipt,
+  FlaskConical, Settings, X, type LucideIcon,
+} from 'lucide-react'
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: '📊 儀表板' },
-  { to: '/products',  label: '🍽️ 菜單商品' },
-  { to: '/inventory', label: '📦 食材庫存' },
-  { to: '/purchase',  label: '🛒 採購進貨' },
-  { to: '/sales',     label: '💰 銷售管理' },
-  { to: '/testing',   label: '🧪 併發測試' },
-  { to: '/settings',  label: '⚙️ 系統設定' },
+interface NavItem {
+  to: string
+  label: string
+  icon: LucideIcon
+  devOnly?: boolean
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { to: '/dashboard', label: '儀表板',   icon: LayoutDashboard },
+  { to: '/products',  label: '菜單商品', icon: UtensilsCrossed },
+  { to: '/inventory', label: '食材庫存', icon: Package },
+  { to: '/purchase',  label: '採購進貨', icon: ShoppingCart },
+  { to: '/sales',     label: '銷售管理', icon: Receipt },
+  // 以下兩項只在開發模式（npm run dev）顯示：
+  //   併發測試是驗證樂觀鎖的開發工具，系統設定尚未完成，
+  //   正式展示時不出現在導覽列，避免使用者點到未完成的頁面
+  { to: '/testing',   label: '併發測試', icon: FlaskConical, devOnly: true },
+  { to: '/settings',  label: '系統設定', icon: Settings,     devOnly: true },
 ]
-// 【修正 Bug 5】補上「併發測試」導覽項目，放在銷售管理之後、系統設定之前，
-// 對應功能屬性（測試銷售流程），不放最前面避免搶走日常操作項目的視覺焦點
 
-function Sidebar() {
+const visibleItems = NAV_ITEMS.filter(item => !item.devOnly || import.meta.env.DEV)
+
+interface SidebarProps {
+  /** 手機版：側欄是否展開 */
+  open: boolean
+  /** 手機版：關閉側欄（點選項目或遮罩時呼叫） */
+  onClose: () => void
+}
+
+function Sidebar({ open, onClose }: SidebarProps) {
   return (
-    <aside style={{
-      width: '240px',
-      minHeight: '100vh',
-      background: '#1E3A5F',
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0,
-    }}>
-      <div style={{
-        padding: '24px 20px',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-      }}>
-        <div style={{ color: '#fff', fontWeight: 700, fontSize: '16px' }}>
-          🍴 智慧餐飲
-        </div>
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '4px' }}>
-          進銷存管理系統
-        </div>
-      </div>
+    <>
+      {/* 手機版遮罩：側欄展開時覆蓋內容，點擊即關閉 */}
+      <div
+        className={`fixed inset-0 z-30 bg-black/40 transition-opacity md:hidden ${
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      <nav style={{ flex: 1, padding: '16px 0' }}>
-        {NAV_ITEMS.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            style={({ isActive }) => ({
-              display: 'block',
-              padding: '12px 20px',
-              color: isActive ? '#fff' : 'rgba(255,255,255,0.6)',
-              background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
-              textDecoration: 'none',
-              fontSize: '14px',
-              borderLeft: isActive ? '3px solid #1E40AF' : '3px solid transparent',
-              transition: 'all 0.15s',
-            })}
+      {/* 桌機：固定在左側；手機：從左側滑出的抽屜 */}
+      <aside
+        id="app-sidebar"
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col bg-[#1E3A5F] transition-transform duration-200
+          md:sticky md:top-0 md:h-screen md:translate-x-0
+          ${open ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="flex items-start justify-between border-b border-white/10 px-5 py-6">
+          <div>
+            <div className="flex items-center gap-2 text-base font-bold text-white">
+              <UtensilsCrossed size={18} aria-hidden="true" />
+              智慧餐飲
+            </div>
+            <div className="mt-1 text-xs text-white/60">進銷存管理系統</div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded p-1 text-white/70 hover:bg-white/10 hover:text-white md:hidden"
+            aria-label="關閉選單"
           >
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+            <X size={20} />
+          </button>
+        </div>
 
-      <div style={{
-        padding: '16px 20px',
-        color: 'rgba(255,255,255,0.3)',
-        fontSize: '11px',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-      }}>
-        v0.1.0 · 林家齊 Ataya Lin
-      </div>
-    </aside>
+        <nav className="flex-1 py-4" aria-label="主要功能">
+          {visibleItems.map(({ to, label, icon: Icon, devOnly }) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 border-l-[3px] px-5 py-3 text-sm transition-colors ${
+                  isActive
+                    ? 'border-sky-400 bg-white/10 text-white'
+                    : 'border-transparent text-white/70 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span>{label}</span>
+              {devOnly && (
+                <span className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/60">DEV</span>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="border-t border-white/10 px-5 py-4 text-xs text-white/50">
+          v0.1.0 · 林家齊 Ataya Lin
+        </div>
+      </aside>
+    </>
   )
 }
 

@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import type { QueryRequest, QueryResponse } from '../types/query';
+import { N8N_QUERY_ASSISTANT_URL } from '../lib/config'
 
 /**
  * useQueryAssistant
@@ -21,8 +22,7 @@ import type { QueryRequest, QueryResponse } from '../types/query';
  * 沿用 useRestockSuggestion.ts 已經驗證穩定的 fetch + retry 架構。
  */
 
-const N8N_QUERY_ASSISTANT_URL = 'http://localhost:5678/webhook/query-assistant';
-// TODO: 之後正式部署時，改用環境變數 import.meta.env.VITE_N8N_QUERY_URL
+
 
 async function fetchQueryAnswer(question: string): Promise<QueryResponse> {
   const response = await fetch(N8N_QUERY_ASSISTANT_URL, {

@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { N8N_RESTOCK_URL } from '../lib/config'
 // useMutation：補貨建議是「使用者主動觸發一次性動作」（呼叫 n8n → AI），
 //   不是被動的資料讀取，語意上更接近 mutation 而非 query
 // 關聯：src/pages/Dashboard.tsx 的「AI 補貨建議」按鈕會用到這個 hook
@@ -8,9 +9,9 @@ import { useMutation } from '@tanstack/react-query'
 // 為什麼不用 /api 前綴：n8n 是獨立服務（port 5678），不經過 json-server 的 Vite proxy
 //   直接打 n8n 的 Production URL
 // ==========================================
-const N8N_RESTOCK_URL = 'http://localhost:5678/webhook/test-lin'
-// TODO: 之後正式化時，這個 path 建議改名為更語意化的 'restock-suggestion'
-//   並考慮搬進 .env（例如 VITE_N8N_RESTOCK_URL），避免寫死在程式碼裡
+
+// 網址已移到 src/lib/config.ts，可用 .env 的 VITE_N8N_RESTOCK_URL 覆寫
+// TODO: n8n 的 path 'test-lin' 之後可改名為更語意化的 'restock-suggestion'
 
 // 逾時時間集中管理成常數，方便之後統一調整，也讓數字有名字、不是裸的 magic number
 const REQUEST_TIMEOUT_MS = 20000 // 20 秒
@@ -67,7 +68,7 @@ async function fetchRestockSuggestion(payload: LowStockPayload): Promise<Restock
     // 判斷這次失敗是不是「逾時被我們自己取消的」，還是其他原因（例如網路斷線、n8n 沒開）
     // 這樣使用者看到的錯誤訊息才會對應到實際情況，而不是統一顯示一句籠統的錯誤
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('AI 補貨建議逾時，請確認 n8n 服務是否正常運作後再試一次')
+      throw new Error('AI 補貨建議逾時，請確認 n8n 服務是否正常運作後再試一次', { cause: err })
     }
     throw err // 其他類型的錯誤（例如 res.ok 檢查拋出的錯誤）原樣往外丟，交給 useMutation 的 onError/isError 處理
   } finally {

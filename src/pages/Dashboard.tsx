@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
+import { AlertTriangle, Clock, Sparkles, MessageSquare } from 'lucide-react'
 import { useDashboard } from '../hooks/useDashboard'
 import { useRestockSuggestion } from '../hooks/useRestockSuggestion'
 import { useQueryAssistant } from '../hooks/useQueryAssistant' // 新增：Agent B 自然語言查詢助理
@@ -76,20 +77,31 @@ function Dashboard() {
       {/* 近 7 天銷售趨勢 */}
       <div className="bg-white rounded-lg shadow p-4">
         <h3 className="font-semibold mb-3">近 7 天銷售趨勢</h3>
+        {dailyTrend.every(d => d.revenue === 0) ? (
+          // 空資料狀態：7 天都沒有營收時，不畫一條貼著 0 的線，改成明確的提示
+          <div className="flex h-[250px] flex-col items-center justify-center rounded border border-dashed border-gray-200 text-center">
+            <p className="text-sm font-medium text-gray-700">近 7 天沒有已完成的銷售紀錄</p>
+            <p className="mt-1 text-xs text-gray-500">到「銷售管理」完成一筆訂單後，這裡就會出現營收趨勢</p>
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={dailyTrend}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis />
+            <YAxis width={70} tickFormatter={(v: number) => `NT$ ${v.toLocaleString()}`} />
             <Tooltip formatter={(value) => [`NT$ ${Number(value).toLocaleString()}`, '營收']} />
             <Line type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Agent B：自然語言查詢助理 */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="font-semibold mb-3">💬 智慧查詢助理</h3>
+        <h3 className="font-semibold mb-3 flex items-center gap-2">
+          <MessageSquare size={18} className="text-blue-600" aria-hidden="true" />
+          智慧查詢助理
+        </h3>
         <div className="flex gap-2 mb-3">
           <input
             type="text"
@@ -125,7 +137,8 @@ function Dashboard() {
         {/* 低庫存警示 */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            🔴 低庫存警示
+            <AlertTriangle size={18} className="text-red-500" aria-hidden="true" />
+            低庫存警示
             {lowStockItems.length > 0 && (
               <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
                 {lowStockItems.length}
@@ -152,9 +165,10 @@ function Dashboard() {
               <button
                 onClick={handleRestockSuggestion}
                 disabled={restockMutation.isPending}
-                className="w-full text-sm bg-orange-50 text-orange-600 border border-orange-200 rounded-md py-2 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-1.5 text-sm bg-orange-50 text-orange-600 border border-orange-200 rounded-md py-2 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {restockMutation.isPending ? '🤖 AI 分析中...' : '🤖 AI 補貨建議'}
+                <Sparkles size={16} aria-hidden="true" />
+                {restockMutation.isPending ? 'AI 分析中…' : 'AI 補貨建議'}
               </button>
 
               {restockMutation.isError && (
@@ -175,7 +189,8 @@ function Dashboard() {
         {/* 到期警告 */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            ⏰ 即期食材
+            <Clock size={18} className="text-amber-500" aria-hidden="true" />
+            即期食材
             {expiryWarnings.length > 0 && (
               <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
                 {expiryWarnings.length}

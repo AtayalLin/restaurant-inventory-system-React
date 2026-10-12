@@ -13,6 +13,7 @@ import IngredientFormModal from './IngredientFormModal'
 // 新增與編輯共用同一個 Modal
 
 import type { Ingredient } from '../../types'
+import { AlertTriangle } from 'lucide-react'
 // 關聯：src/types/index.ts
 // Ingredient：{ id, name, unit, category, supplierId, currentStock,
 //              safetyStock, expiryDays, costPerUnit, createdAt }
@@ -164,8 +165,9 @@ function InventoryPage() {
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7280' }}>
             共 {filtered.length} 筆食材
             {lowStockCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#D97706', fontWeight: 500 }}>
-                ⚠️ {lowStockCount} 樣食材庫存不足
+              <span style={{ marginLeft: '12px', color: '#B45309', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}>
+                <AlertTriangle size={14} aria-hidden="true" />
+                {lowStockCount} 樣食材庫存不足
               </span>
             )}
           </p>
@@ -230,9 +232,9 @@ function InventoryPage() {
         background: '#fff',
         borderRadius: '8px',
         border: '1px solid #E5E7EB',
-        overflow: 'hidden',
+        overflowX: 'auto',   // 小螢幕時表格在框內橫向捲動，同時保留圓角裁切
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E5E7EB' }}>
               {['食材名稱', '分類', '現有庫存', '安全庫存', '供應商', '效期', '庫存狀態', '操作'].map(h => (

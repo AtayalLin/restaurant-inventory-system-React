@@ -7,13 +7,14 @@ import type { Product, ProductCategory } from '../types'
 // 從統一的型別定義檔引入，確保資料結構一致
 
 import { fetchJSON } from '../lib/fetchJSON' // 新增：改用共用的 fetchJSON，取代原本檔案內重複定義的版本
+import { API_BASE } from '../lib/config'
 
 
 // ==========================================
 // API 基礎路徑（透過 vite proxy 轉發到 json-server）
 // fetch('/api/products') → proxy → http://localhost:3001/products
 // ==========================================
-const BASE = '/api'
+const BASE = API_BASE
 
 // ── fetch helper：處理 304 Not Modified + 自動重試 ──────────── 因為考慮到可維護性，fetchJSON 已經搬到 src/lib/fetchJSON.ts，這裡不再重複定義，做為參考資料備註於此。
 // 為什麼需要：瀏覽器自動帶 If-None-Match 快取標頭

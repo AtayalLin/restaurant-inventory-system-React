@@ -15,9 +15,10 @@ import type { Ingredient, Supplier } from '../types'
 // 為什麼同時引入 Supplier：食材列表需要顯示供應商名稱，要一起取得
 
 import { fetchJSON } from '../lib/fetchJSON' // 新增
+import { API_BASE } from '../lib/config'
 
 
-const BASE = '/api'
+const BASE = API_BASE
 // Vite proxy 會把 /api/... 轉發到 http://localhost:3001/...
 // 關聯：vite.config.ts 的 proxy 設定
 
@@ -95,9 +96,9 @@ export function useCreateIngredient() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: Omit<Ingredient, 'id' | 'createdAt'>) => {
-      // Omit<Ingredient, 'id' | 'createdAt'>：
-      //   新增時不需要傳 id（由這裡產生）和 createdAt（由這裡補上）
+    mutationFn: async (data: Omit<Ingredient, 'id' | 'createdAt' | 'version'>) => {
+      // Omit<Ingredient, 'id' | 'createdAt' | 'version'>：
+      //   新增時不需要傳 id（由這裡產生）、createdAt 與 version（由這裡補上）
       //   TypeScript 會確保其他所有必填欄位都有傳入
       const res = await fetch(`${BASE}/ingredients`, {
         method: 'POST',
@@ -108,6 +109,8 @@ export function useCreateIngredient() {
           // crypto.randomUUID()：瀏覽器內建的 UUID 產生器，不需要額外套件
           // 產生範例：'550e8400-e29b-41d4-a716-446655440000'
           createdAt: new Date().toISOString(),
+          version: 0,
+          // 樂觀鎖版本號從 0 開始，之後每次更新 +1
           // toISOString()：產生 ISO 8601 格式，範例：'2026-06-24T08:00:00.000Z'
           // 為什麼用 ISO 8601：跨時區標準格式，json-server 排序也用這個
         }),

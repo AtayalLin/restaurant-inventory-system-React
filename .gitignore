@@ -22,7 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# 環境變數（含 API 金鑰）：只提交 .env.example
 .env
-.env
+.env.*
+!.env.example
+
+# 本機測試資料
 payload.json
-payload.json
+
+# n8n 匯出的 workflow 可能含有 API 金鑰，提交前務必先移除金鑰並改用 n8n Credentials
+*workflow*.json

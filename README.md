@@ -60,6 +60,16 @@
 
 ## 🚀 本機啟動方式
 
+**第一次啟動前**：複製環境變數範本，填入自己的 NVIDIA API 金鑰
+
+```bash
+cp .env.example .env
+# 編輯 .env，填入 NVIDIA_API_KEY=nvapi-...
+```
+
+> 🔒 **金鑰不會進入前端**：`NVIDIA_API_KEY` 沒有 `VITE_` 前綴，只由 `vite.config.ts` 的 proxy 在開發伺服器端加到請求標頭，前端程式碼與 `npm run build` 的打包檔都不會出現金鑰。
+> API 與 n8n 網址統一在 `src/lib/config.ts` 管理，可用 `.env` 覆寫，未來換成 Spring Boot 後端只需修改 `API_PROXY_TARGET`。
+
 需要同時開啟三個終端機：
 
 ```bash
@@ -235,7 +245,7 @@ docker start n8n       # http://localhost:5678
 1. 新增 `GENERAL_INVENTORY_QA` 意圖的資料撈取 Code 節點（撈取 products + ingredients 摘要，作為 AI 回答的上下文依據）
 2. 實作 `TOP_SELLING_PRODUCTS` 意圖（統計 salesOrders 中各商品銷售數量並排序）
 3. 將查詢助理 UI 從 Dashboard 內嵌小卡片，視時間評估是否獨立成專屬頁面／聊天框元件
-4. 技術債：API 端點目前寫死在各 hook 檔案，應改用 `.env` 環境變數管理
+4. ~~技術債：API 端點目前寫死在各 hook 檔案，應改用 `.env` 環境變數管理~~（已完成：集中於 `src/lib/config.ts`）
 
 ---
 

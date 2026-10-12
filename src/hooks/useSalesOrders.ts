@@ -10,10 +10,11 @@ import { fetchJSON } from '../lib/fetchJSON'
 // （批次寫入庫存的邏輯已搬到 stockOperations.ts / salesOperations.ts）
 
 import { completeSalesOrderCore } from '../lib/salesOperations'
+import { API_BASE } from '../lib/config'
 // 【修正 Bug 3】移除未使用的 applyStockChangeWithLock 匯入
 // （這支函式現在只在 salesOperations.ts / usePurchaseOrders.ts 內部被呼叫）
 
-const BASE = '/api'
+const BASE = API_BASE
 
 // ── fetch helper：處理 304 問題 + 自動重試 ────────────────── 因為考慮到可維護性，fetchJSON 已經搬到 src/lib/fetchJSON.ts，這裡不再重複定義，做為參考資料備註於此。
 // 為什麼加 retry：json-server 在短時間內收到大量併發寫入請求時

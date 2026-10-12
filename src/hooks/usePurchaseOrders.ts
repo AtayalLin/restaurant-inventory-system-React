@@ -2,8 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PurchaseOrder } from '../types'
 import { fetchJSON } from '../lib/fetchJSON'
 import { applyStockChangeWithLock } from '../lib/stockOperations'
+import { API_BASE } from '../lib/config'
 
-const BASE = '/api'
+const BASE = API_BASE
 
 export function usePurchaseOrders() {
   return useQuery<PurchaseOrder[]>({

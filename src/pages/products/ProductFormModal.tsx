@@ -32,6 +32,7 @@ import type { Product } from '../../types'
 // Product 型別：{ id, name, categoryId, price, taxType, description, imageUrl, recipe, isActive, createdAt }
 
 import { useProductCategories } from '../../hooks/useProducts'
+import { Sparkles } from 'lucide-react'
 // 取得分類列表，給表單的「分類」下拉選單使用
 
 // ── Zod Schema 定義 ────────────────────────────────────────
@@ -365,12 +366,13 @@ async function handleAIGenerate() {
         gap: '4px',
       }}
     >
-      {isAIGenerating ? '⏳ 生成中...' : '✨ AI 生成描述'}
+      <Sparkles size={14} aria-hidden="true" />
+      {isAIGenerating ? '生成中…' : 'AI 生成描述'}
     </button>
   </div>
   <textarea
     {...register('description')}
-    placeholder="選填，點擊「✨ AI 生成描述」自動生成"
+    placeholder="選填，點擊「AI 生成描述」自動生成"
     rows={3}
     style={{
       ...inputStyle(!!errors.description),

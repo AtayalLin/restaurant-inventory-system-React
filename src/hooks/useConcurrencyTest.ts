@@ -3,8 +3,9 @@ import { fetchJSON } from '../lib/fetchJSON'
 import { completeSalesOrderCore } from '../lib/salesOperations'
 import { calcTax, calcTotal } from './useSalesOrders'
 import type { Product, Ingredient, SalesOrder, StockLog, TestRun, TestRunIngredientSnapshot } from '../types'
+import { API_BASE } from '../lib/config'
 
-const BASE = '/api'
+const BASE = API_BASE
 
 // 取得所有測試紀錄（測試頁面歷史列表用）
 export function useTestRuns() {

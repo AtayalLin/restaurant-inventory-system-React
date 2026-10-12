@@ -9,6 +9,7 @@ import PurchasePage from './pages/purchase/PurchasePage'
 import SalesPage from './pages/sales/SalesPage'
 import SettingsPage from './pages/SettingsPage'
 import ConcurrencyTestPage from './pages/testing/ConcurrencyTestPage'
+import NotFoundPage from './pages/NotFoundPage'
 // 【修正 Bug 4】補上匯入，否則畫面已經寫好但路由沒接，使用者永遠進不去
 
 function App() {
@@ -25,6 +26,8 @@ function App() {
           <Route path="settings"  element={<SettingsPage />} />
           <Route path="testing"   element={<ConcurrencyTestPage />} />
           {/* 【修正 Bug 4】新增併發測試路由 */}
+          <Route path="*" element={<NotFoundPage />} />
+          {/* 其他未定義的網址一律顯示 404 頁面 */}
         </Route>
       </Routes>
     </BrowserRouter>

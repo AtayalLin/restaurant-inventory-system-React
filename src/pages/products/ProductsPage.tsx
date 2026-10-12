@@ -181,9 +181,9 @@ function ProductsPage() {
         background: '#fff',
         borderRadius: '8px',
         border: '1px solid #E5E7EB',
-        overflow: 'hidden',   // 讓圓角套用到表格
+        overflowX: 'auto',   // 小螢幕時表格在框內橫向捲動，同時保留圓角裁切
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E5E7EB' }}>
               {['商品名稱', '分類', '售價', '稅別', '狀態', '操作'].map(h => (

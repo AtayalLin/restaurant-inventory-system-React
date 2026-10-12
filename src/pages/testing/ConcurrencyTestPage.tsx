@@ -173,7 +173,7 @@ function ConcurrencyTestPage() {
           <div style={{ marginTop: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', color: '#374151' }}>
               <span>進度 {liveProgress.completed} / {liveProgress.total}</span>
-              <span>成功 {liveProgress.success}　失敗 {liveProgress.fail}</span>
+              <span>成功 {liveProgress.success}{'\u3000'}失敗 {liveProgress.fail}</span>
             </div>
             <div style={{ height: '8px', background: '#E5E7EB', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{
@@ -223,7 +223,7 @@ function ConcurrencyTestPage() {
             const name = result.ingredientSnapshots.find(s => s.ingredientId === snap.ingredientId)?.ingredientName
             return (
               <div key={snap.ingredientId} style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>
-                {name}　最終庫存：{snap.finalStock}
+                {name}{'\u3000'}最終庫存：{snap.finalStock}
               </div>
             )
           })}
@@ -256,7 +256,7 @@ function ConcurrencyTestPage() {
               display: 'flex', justifyContent: 'space-between', padding: '8px 0',
               borderBottom: '1px solid #F3F4F6', fontSize: '13px',
             }}>
-              <span>{run.productName}　{new Date(run.createdAt).toLocaleString('zh-TW')}</span>
+              <span>{run.productName}{'\u3000'}{new Date(run.createdAt).toLocaleString('zh-TW')}</span>
               <span style={{ color: run.status === 'COMPLETED' ? (run.isOverSold ? '#DC2626' : '#16A34A') : '#6B7280' }}>
                 {run.status === 'COMPLETED' ? `成功 ${run.successCount} / 失敗 ${run.failCount}` : run.status}
               </span>

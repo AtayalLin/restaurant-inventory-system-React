@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom'
+import { Bell, Menu } from 'lucide-react'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': '儀表板',
@@ -6,30 +7,38 @@ const PAGE_TITLES: Record<string, string> = {
   '/inventory': '食材庫存管理',
   '/purchase':  '採購進貨管理',
   '/sales':     '銷售管理',
+  '/testing':   '併發測試',
   '/settings':  '系統設定',
 }
 
-function Header() {
+interface HeaderProps {
+  menuOpen: boolean
+  onMenuClick: () => void
+}
+
+function Header({ menuOpen, onMenuClick }: HeaderProps) {
   const { pathname } = useLocation()
   const title = PAGE_TITLES[pathname] ?? '智慧餐飲進銷存'
 
   return (
-    <header style={{
-      height: '64px',
-      background: '#fff',
-      borderBottom: '1px solid #E5E7EB',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 24px',
-      justifyContent: 'space-between',
-      flexShrink: 0,
-    }}>
-      <h1 style={{ fontSize: '18px', fontWeight: 600, color: '#1E3A5F', margin: 0 }}>
-        {title}
-      </h1>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <span style={{ fontSize: '20px', cursor: 'pointer' }} title="低庫存警示">🔔</span>
-        <span style={{ fontSize: '14px', color: '#6B7280' }}>老闆</span>
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 md:px-6">
+      <div className="flex items-center gap-2">
+        {/* 漢堡選單：只在手機版顯示 */}
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="-ml-1 rounded p-1.5 text-[#1E3A5F] hover:bg-slate-100 md:hidden"
+          aria-label="開啟選單"
+          aria-controls="app-sidebar"
+          aria-expanded={menuOpen}
+        >
+          <Menu size={22} />
+        </button>
+        <h1 className="m-0 text-lg font-semibold text-[#1E3A5F]">{title}</h1>
+      </div>
+      <div className="flex items-center gap-4">
+        <Bell size={20} className="text-gray-500" aria-label="通知" />
+        <span className="text-sm text-gray-500">老闆</span>
       </div>
     </header>
   )
