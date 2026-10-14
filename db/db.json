@@ -103,7 +103,7 @@
       "unit": "g",
       "category": "肉類",
       "supplierId": "s001",
-      "currentStock": 400,
+      "currentStock": 500,
       "safetyStock": 500,
       "expiryDays": 3,
       "costPerUnit": 0.2,

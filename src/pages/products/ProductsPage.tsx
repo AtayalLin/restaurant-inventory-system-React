@@ -1,309 +1,128 @@
+// 菜單商品管理頁面 - 對應路由 /products
+// 負責：商品列表、搜尋／分類篩選、開啟新增或編輯 Modal、刪除商品
+// 樣式改用 src/components/ui 的共用元件，與儀表板一致
 import { useState, useMemo } from 'react'
-// useState：管理「搜尋關鍵字」、「選中的分類篩選」、「Modal 開關與編輯目標」等 UI 狀態
-// useMemo：當商品列表或搜尋條件變動時，才重新計算篩選結果，避免每次 render 都重算
-
+import { Plus, Search, UtensilsCrossed, Pencil, Trash2 } from 'lucide-react'
 import { useProducts, useProductCategories, useDeleteProduct } from '../../hooks/useProducts'
-// 關聯：src/hooks/useProducts.ts
-// 這三個 hook 封裝了所有 API 呼叫邏輯，頁面元件只負責顯示與互動
-
 import ProductFormModal from './ProductFormModal'
-// 關聯：src/pages/products/ProductFormModal.tsx（下一步建立）
-// 新增與編輯共用同一個 Modal，透過傳入 product 是否為 null 來區分模式
-
+import {
+  Badge, Button, DataTable, EmptyRow, EmptyState, PageHeader, TableSkeleton,
+  inputClass, useToast, errorMessage,
+} from '../../components/ui'
+import { formatCurrency } from '../../lib/format'
 import type { Product } from '../../types'
-// 關聯：src/types/index.ts
-// Product 型別：{ id, name, categoryId, price, taxType, description, imageUrl, recipe, isActive, createdAt }
 
-// ── 稅率顯示對照表 ──────────────────────────────────────────
-// 為什麼這樣寫：TaxType 是 enum 字串，UI 要顯示人看得懂的文字
-// 集中在這裡定義，改動時只需改一處
-const TAX_LABEL: Record<string, string> = {
-  TAX_5:    '含稅 5%',
-  TAX_10:   '含稅 10%',
+const TAX_LABEL: Record<Product['taxType'], string> = {
+  TAX_5: '含稅 5%',
+  TAX_10: '含稅 10%',
   TAX_FREE: '免稅',
 }
 
 function ProductsPage() {
-  // ── UI 狀態 ──────────────────────────────────────────────
   const [search, setSearch] = useState('')
-  // search：搜尋關鍵字，對應商品名稱的模糊搜尋
-  // 為什麼用 useState 不用 URL query：這是暫時的 UI 狀態，不需要分享連結
-
   const [filterCategory, setFilterCategory] = useState('')
-  // filterCategory：選中的分類 id，空字串代表「全部」
+  // undefined = Modal 關閉；null = 新增模式；Product = 編輯模式（一個狀態表達三種情況）
+  const [editing, setEditing] = useState<Product | null | undefined>(undefined)
 
-  const [modalOpen, setModalOpen] = useState(false)
-  // modalOpen：控制 ProductFormModal 顯示/隱藏
-
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  // editingProduct：
-  //   null  → 開啟新增模式
-  //   Product → 開啟編輯模式，並把資料帶入表單
-  // 型別是 Product | null，對應 types/index.ts 的 Product 介面
-
-  // ── 資料取得 ─────────────────────────────────────────────
-  const { data: products = [], isLoading: productsLoading } = useProducts()
-  // products 預設給 []，避免 isLoading 期間 map() 出錯
-  // 關聯：useProducts() 打 GET /api/products → json-server → db.json
-
+  const { data: products = [], isLoading } = useProducts()
   const { data: categories = [] } = useProductCategories()
-  // 關聯：useProductCategories() 打 GET /api/productCategories
-
   const { mutate: deleteProduct } = useDeleteProduct()
-  // mutate 是觸發 mutation 的函式，命名為 deleteProduct 更語意化
-  // 關聯：useDeleteProduct() 打 DELETE /api/products/:id
+  const toast = useToast()
 
-  // ── 分類 id → 名稱 的查找表 ─────────────────────────────
-  // 為什麼用 Map 不用 find()：
-  //   find() 每次查找是 O(n)，Map 是 O(1)
-  //   商品列表每列都要查分類名稱，用 Map 效能更好
-  const categoryMap = useMemo(() => {
-    return new Map(categories.map(c => [c.id, c.name]))
-    // 結果範例：Map { 'cat001' => '主食', 'cat002' => '飲料' }
-  }, [categories])
+  // 分類 id → 名稱的查找表，表格每列都要用，先建好避免重複 find
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories])
 
-  // ── 前端篩選邏輯 ──────────────────────────────────────────
-  // 為什麼用 useMemo：
-  //   products 或搜尋條件變動才重新計算
-  //   避免每次 re-render 都重跑 filter（商品多時有感）
   const filtered = useMemo(() => {
-    return products.filter(p => {
-      const matchName = p.name.includes(search)
-      // 名稱模糊搜尋，includes() 區分大小寫但中文夠用
-
-      const matchCategory = filterCategory === '' || p.categoryId === filterCategory
-      // 空字串代表「不篩選分類」
-
-      return matchName && matchCategory
-    })
+    const keyword = search.trim()
+    return products.filter(p =>
+      p.name.includes(keyword) && (filterCategory === '' || p.categoryId === filterCategory))
   }, [products, search, filterCategory])
 
-  // ── 事件處理 ──────────────────────────────────────────────
-  function handleAdd() {
-    setEditingProduct(null)   // null → Modal 進入新增模式
-    setModalOpen(true)
-  }
-
-  function handleEdit(product: Product) {
-    setEditingProduct(product) // 傳入商品資料 → Modal 進入編輯模式
-    setModalOpen(true)
-  }
-
   function handleDelete(product: Product) {
-    // 為什麼用 window.confirm：
-    //   目前階段先用瀏覽器原生 confirm，夠用且不需要額外元件
-    //   之後可換成自訂 ConfirmModal（Week 3 UI 細節優化）
     if (!window.confirm(`確定刪除「${product.name}」？此操作無法復原。`)) return
-    deleteProduct(product.id)
-    // deleteProduct 成功後 useDeleteProduct 的 onSuccess 會自動刷新列表
+    deleteProduct(product.id, {
+      onSuccess: () => toast.success(`已刪除「${product.name}」`),
+      onError: err => toast.error(errorMessage(err, '刪除失敗，請稍後再試')),
+    })
   }
 
-  function handleModalClose() {
-    setModalOpen(false)
-    setEditingProduct(null)   // 關閉時清除，避免下次開啟帶到舊資料
-  }
+  if (isLoading) return <TableSkeleton />
 
-  // ── 載入中狀態 ────────────────────────────────────────────
-  if (productsLoading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7480' }}>
-        載入商品資料中...
-      </div>
-    )
-  }
+  const addButton = (
+    <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setEditing(null)}>新增商品</Button>
+  )
 
-  // ── 畫面渲染 ──────────────────────────────────────────────
   return (
-    <div>
-      {/* ── 頁首：標題 + 新增按鈕 ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1B2532' }}>商品列表</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7480' }}>
-            共 {filtered.length} 筆商品
-          </p>
-        </div>
-        <button
-          onClick={handleAdd}
-          style={{
-            background: '#1F3F6B',  // 強調色：對應設計系統的按鈕主色
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '10px 20px',
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
-        >
-          ＋ 新增商品
-        </button>
-      </div>
+    <div className="mx-auto max-w-[1400px]">
+      <PageHeader title="商品列表" description={`共 ${filtered.length} 筆商品`} action={addButton} />
 
-      {/* ── 搜尋 + 篩選列 ── */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-        <input
-          type="text"
-          placeholder="搜尋商品名稱..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          // onChange 每次輸入都更新 search，useMemo 自動重算 filtered
-          style={{
-            flex: 1,
-            padding: '8px 12px',
-            border: '1px solid #E4E8EE',
-            borderRadius: '8px',
-            fontSize: '14px',
-            outline: 'none',
-          }}
+      {products.length === 0 ? (
+        // 完全沒有商品：引導建立第一筆，而不是顯示空表格
+        <EmptyState
+          className="bg-white"
+          icon={<UtensilsCrossed size={20} />}
+          title="還沒有任何商品"
+          description="建立菜單商品後，就能設定配方、建立銷售訂單並自動扣庫存。"
+          action={addButton}
         />
-        <select
-          value={filterCategory}
-          onChange={e => setFilterCategory(e.target.value)}
-          // 選擇分類 → filterCategory 更新 → useMemo 重算 filtered
-          style={{
-            padding: '8px 12px',
-            border: '1px solid #E4E8EE',
-            borderRadius: '8px',
-            fontSize: '14px',
-            background: '#fff',
-            cursor: 'pointer',
-          }}
-        >
-          <option value="">全部分類</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </div>
+      ) : (
+        <>
+          {/* 搜尋與篩選 */}
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+            <label className="relative flex-1">
+              <span className="sr-only">搜尋商品名稱</span>
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden="true" />
+              <input
+                type="search"
+                placeholder="搜尋商品名稱…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className={`${inputClass()} pl-9`}
+              />
+            </label>
+            <label className="sm:w-44">
+              <span className="sr-only">依分類篩選</span>
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className={inputClass()}>
+                <option value="">全部分類</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+          </div>
 
-      {/* ── 商品表格 ── */}
-      <div style={{
-        background: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0 1px 2px rgb(27 37 50 / 0.04), 0 4px 16px -8px rgb(27 37 50 / 0.12)',
-        border: '1px solid #E4E8EE',
-        overflowX: 'auto',   // 小螢幕時表格在框內橫向捲動，同時保留圓角裁切
-      }}>
-        <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#F5F7FA', borderBottom: '1px solid #E4E8EE' }}>
-              {['商品名稱', '分類', '售價', '稅別', '狀態', '操作'].map(h => (
-                <th key={h} style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  fontSize: '13px',
-                  color: '#6B7480',
-                  fontWeight: 500,
-                }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+          <DataTable headers={['商品名稱', '分類', '售價', '稅別', '狀態', '操作']}>
             {filtered.length === 0 ? (
-              // 空狀態：搜尋無結果或資料庫沒有商品
-              <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#8A93A0' }}>
-                  沒有符合條件的商品
-                </td>
-              </tr>
+              <EmptyRow colSpan={6}>沒有符合條件的商品</EmptyRow>
             ) : (
-              filtered.map((product, index) => (
-                <tr
-                  key={product.id}
-                  style={{
-                    borderBottom: index < filtered.length - 1 ? '1px solid #E4E8EE' : 'none',
-                    // 最後一列不加底線，視覺更乾淨
-                  }}
-                >
-                  {/* 商品名稱 */}
-                  <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#1B2532' }}>
-                    {product.name}
+              filtered.map(product => (
+                <tr key={product.id} className="hover:bg-canvas/60">
+                  <td className="px-4 py-3.5 font-medium text-ink">{product.name}</td>
+                  <td className="px-4 py-3.5 text-ink-2">{categoryMap.get(product.categoryId) ?? '—'}</td>
+                  <td className="tabular px-4 py-3.5 text-ink-2">{formatCurrency(product.price)}</td>
+                  <td className="px-4 py-3.5 text-[13px] text-ink-3">{TAX_LABEL[product.taxType] ?? product.taxType}</td>
+                  <td className="px-4 py-3.5">
+                    <Badge tone={product.isActive ? 'success' : 'neutral'}>{product.isActive ? '販售中' : '已下架'}</Badge>
                   </td>
-
-                  {/* 分類：從 categoryMap 查 id 對應的名稱 */}
-                  <td style={{ padding: '14px 16px', fontSize: '14px', color: '#4A5565' }}>
-                    {categoryMap.get(product.categoryId) ?? '—'}
-                    {/* ?? '—'：查不到分類時顯示破折號，避免顯示 undefined */}
-                  </td>
-
-                  {/* 售價 */}
-                  <td style={{ padding: '14px 16px', fontSize: '14px', color: '#4A5565' }}>
-                    NT$ {product.price.toLocaleString()}
-                    {/* toLocaleString()：數字加千分位，例如 1000 → 1,000 */}
-                  </td>
-
-                  {/* 稅別 */}
-                  <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6B7480' }}>
-                    {TAX_LABEL[product.taxType] ?? product.taxType}
-                  </td>
-
-                  {/* 狀態 Badge */}
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '2px 10px',
-                      borderRadius: '999px',   // 膠囊形狀
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      // isActive 為 true → 綠色（正常販售）；false → 灰色（已下架）
-                      background: product.isActive ? '#D1FAE5' : '#EEF1F5',
-                      color: product.isActive ? '#047857' : '#6B7480',
-                    }}>
-                      {product.isActive ? '販售中' : '已下架'}
-                    </span>
-                  </td>
-
-                  {/* 操作按鈕 */}
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => handleEdit(product)}
-                        style={{
-                          padding: '4px 12px',
-                          fontSize: '13px',
-                          border: '1px solid #E4E8EE',
-                          borderRadius: '4px',
-                          background: '#fff',
-                          cursor: 'pointer',
-                          color: '#4A5565',
-                        }}
-                      >
+                  <td className="px-4 py-3.5">
+                    <div className="flex gap-2">
+                      <Button variant="secondary" size="sm" icon={<Pencil size={13} aria-hidden="true" />}
+                        onClick={() => setEditing(product)} aria-label={`編輯 ${product.name}`}>
                         編輯
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product)}
-                        style={{
-                          padding: '4px 12px',
-                          fontSize: '13px',
-                          border: '1px solid #FDA4AF',
-                          borderRadius: '4px',
-                          background: '#fff',
-                          cursor: 'pointer',
-                          color: '#E11D48',  // 危險色：對應設計系統
-                        }}
-                      >
+                      </Button>
+                      <Button variant="danger" size="sm" icon={<Trash2 size={13} aria-hidden="true" />}
+                        onClick={() => handleDelete(product)} aria-label={`刪除 ${product.name}`}>
                         刪除
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </DataTable>
+        </>
+      )}
 
-      {/* ── 新增/編輯 Modal ── */}
-      {/* modalOpen 為 true 才 render，節省不必要的 DOM */}
-      {modalOpen && (
-        <ProductFormModal
-          product={editingProduct}
-          // product=null → 新增模式；product=Product → 編輯模式
-          // 關聯：ProductFormModal 用這個 prop 決定表單初始值和 API 動作
-          onClose={handleModalClose}
-        />
+      {editing !== undefined && (
+        <ProductFormModal product={editing} onClose={() => setEditing(undefined)} />
       )}
     </div>
   )
