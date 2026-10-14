@@ -54,23 +54,23 @@ const productCategories: ProductCategory[] = [
 ]
 
 const suppliers: Supplier[] = [
-  { id: 's001', name: '台灣生鮮肉品行', contact: '陳老闆', phone: '0912-345-678', paymentTerm: '月結30天', createdAt: CREATED },
-  { id: 's002', name: '大豐乾貨批發', contact: '林小姐', phone: '07-123-4567', paymentTerm: '貨到付款', createdAt: CREATED },
+  { id: 's001', name: '台灣生鮮肉品行', contact: '陳老闆', phone: '0912-345-678', paymentTerm: '月結30天', orderDays: [1, 4], createdAt: CREATED },
+  { id: 's002', name: '大豐乾貨批發', contact: '林小姐', phone: '07-123-4567', paymentTerm: '貨到付款', orderDays: [2, 5], createdAt: CREATED },
   { id: 's003', name: '南部蔬果合作社', contact: '王先生', phone: '0933-222-111', paymentTerm: '月結15天', createdAt: CREATED },
 ]
 
 // currentStock 刻意讓部分食材低於安全庫存，Demo 時才看得到「低庫存警示」與「AI 補貨建議」
 const ingredients: Ingredient[] = [
-  { id: 'i001', name: '牛腱肉',   unit: 'g',  category: '肉類',     supplierId: 's001', currentStock: 1800,  safetyStock: 3000, expiryDays: 3,   costPerUnit: 0.32, createdAt: CREATED, version: 0 },
-  { id: 'i002', name: '麵條',     unit: 'g',  category: '乾貨',     supplierId: 's002', currentStock: 1200,  safetyStock: 2000, expiryDays: 180, costPerUnit: 0.04, createdAt: CREATED, version: 0 },
-  { id: 'i003', name: '豬五花肉', unit: 'g',  category: '肉類',     supplierId: 's001', currentStock: 4200,  safetyStock: 2000, expiryDays: 3,   costPerUnit: 0.22, createdAt: CREATED, version: 0 },
+  { id: 'i001', name: '牛腱肉',   unit: 'g',  category: '肉類',     supplierId: 's001', currentStock: 1800,  safetyStock: 3000, expiryDays: 3,   costPerUnit: 0.32, minOrderQty: 1000, createdAt: CREATED, version: 0 },
+  { id: 'i002', name: '麵條',     unit: 'g',  category: '乾貨',     supplierId: 's002', currentStock: 1200,  safetyStock: 2000, expiryDays: 180, costPerUnit: 0.04, minOrderQty: 5000, createdAt: CREATED, version: 0 },
+  { id: 'i003', name: '豬五花肉', unit: 'g',  category: '肉類',     supplierId: 's001', currentStock: 4200,  safetyStock: 2000, expiryDays: 3,   costPerUnit: 0.22, minOrderQty: 1000, createdAt: CREATED, version: 0 },
   { id: 'i004', name: '珍珠粉圓', unit: 'g',  category: '飲料原料', supplierId: 's002', currentStock: 2600,  safetyStock: 1000, expiryDays: 7,   costPerUnit: 0.08, createdAt: CREATED, version: 0 },
-  { id: 'i005', name: '白米',     unit: 'g',  category: '乾貨',     supplierId: 's002', currentStock: 15000, safetyStock: 5000, expiryDays: 365, costPerUnit: 0.05, createdAt: CREATED, version: 0 },
-  { id: 'i006', name: '青江菜',   unit: 'g',  category: '蔬菜',     supplierId: 's003', currentStock: 600,   safetyStock: 1500, expiryDays: 2,   costPerUnit: 0.06, createdAt: CREATED, version: 0 },
-  { id: 'i007', name: '雞蛋',     unit: '顆', category: '蛋奶',     supplierId: 's003', currentStock: 90,    safetyStock: 60,   expiryDays: 14,  costPerUnit: 6,    createdAt: CREATED, version: 0 },
+  { id: 'i005', name: '白米',     unit: 'g',  category: '乾貨',     supplierId: 's002', currentStock: 15000, safetyStock: 5000, expiryDays: 365, costPerUnit: 0.05, minOrderQty: 10000, createdAt: CREATED, version: 0 },
+  { id: 'i006', name: '青江菜',   unit: 'g',  category: '蔬菜',     supplierId: 's003', currentStock: 600,   safetyStock: 1500, expiryDays: 2,   costPerUnit: 0.06, minOrderQty: 1000, createdAt: CREATED, version: 0 },
+  { id: 'i007', name: '雞蛋',     unit: '顆', category: '蛋奶',     supplierId: 's003', currentStock: 90,    safetyStock: 60,   expiryDays: 14,  costPerUnit: 6, minOrderQty: 30,    createdAt: CREATED, version: 0 },
   { id: 'i008', name: '紅茶葉',   unit: 'g',  category: '飲料原料', supplierId: 's002', currentStock: 1500,  safetyStock: 500,  expiryDays: 270, costPerUnit: 0.6,  createdAt: CREATED, version: 0 },
-  { id: 'i009', name: '鮮奶',     unit: 'ml', category: '蛋奶',     supplierId: 's003', currentStock: 3000,  safetyStock: 4000, expiryDays: 5,   costPerUnit: 0.09, createdAt: CREATED, version: 0 },
-  { id: 'i010', name: '豆干',     unit: '片', category: '豆製品',   supplierId: 's003', currentStock: 120,   safetyStock: 50,   expiryDays: 4,   costPerUnit: 4,    createdAt: CREATED, version: 0 },
+  { id: 'i009', name: '鮮奶',     unit: 'ml', category: '蛋奶',     supplierId: 's003', currentStock: 3000,  safetyStock: 4000, expiryDays: 5,   costPerUnit: 0.09, minOrderQty: 2000, createdAt: CREATED, version: 0 },
+  { id: 'i010', name: '豆干',     unit: '片', category: '豆製品',   supplierId: 's003', currentStock: 120,   safetyStock: 50,   expiryDays: 4,   costPerUnit: 4, minOrderQty: 20,    createdAt: CREATED, version: 0 },
 ]
 
 const products: Product[] = [

@@ -1,4 +1,8 @@
-import { CalendarClock, CheckCircle2, TrendingUp } from 'lucide-react'
+import { CalendarClock, CheckCircle2, ShoppingCart, TrendingUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useIngredients, useSuppliers } from '../../hooks/useIngredients'
+import { useSession } from '../../session/SessionProvider'
+import { draftsFromForecast } from '../../lib/orderRules'
 import { Card, CardHeader, Badge, EmptyState } from '../ui'
 import type { ForecastResult } from '../../lib/forecast'
 
@@ -12,6 +16,12 @@ const fmt = (n: number) => n.toLocaleString('zh-TW')
 export function ForecastCard({ forecast }: { forecast: ForecastResult }) {
   const { targetDate, weeksUsed, products, ingredients } = forecast
   const toOrder = ingredients.filter(i => i.orderQty > 0)
+  const navigate = useNavigate()
+  const canOrder = useSession().can('purchase:edit')
+  const { data: ingredientList = [] } = useIngredients()
+  const { data: suppliers = [] } = useSuppliers()
+  // 依供應商分組成採購單草稿（已補到最低訂購量），一鍵帶到採購頁
+  const drafts = canOrder ? draftsFromForecast(ingredients, ingredientList, suppliers) : []
   const label = `${targetDate.getMonth() + 1}/${targetDate.getDate()}（${WEEKDAY[targetDate.getDay()]}）`
 
   return (
@@ -61,6 +71,19 @@ export function ForecastCard({ forecast }: { forecast: ForecastResult }) {
                   ))}
                 </tbody>
               </table>
+            )}
+
+            {drafts.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
+                {drafts.map(d => (
+                  <button key={d.supplierId} type="button"
+                    onClick={() => navigate('/purchase', { state: { draft: d } })}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
+                    <ShoppingCart size={13} aria-hidden="true" />
+                    向{d.supplierName}叫貨（{d.items.length} 項）
+                  </button>
+                ))}
+              </div>
             )}
           </>
         )}

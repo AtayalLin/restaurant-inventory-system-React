@@ -54,7 +54,7 @@ function Sidebar({ open, onClose }: SidebarProps) {
       {/* 桌機：固定在左側；手機：從左側滑出的抽屜 */}
       <aside
         id="app-sidebar"
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col bg-[#1E3A5F] transition-transform duration-200
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 print:hidden shrink-0 flex-col bg-[#1E3A5F] transition-transform duration-200
           md:sticky md:top-0 md:h-screen md:translate-x-0
           ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >

@@ -8,7 +8,7 @@
  */
 import { createSeed, type DemoDB } from './seed'
 
-const STORAGE_KEY = 'ris-demo-db-v2' // v2：新增門市資料，舊版快取自動作廢
+const STORAGE_KEY = 'ris-demo-db-v3' // v3：新增最低訂購量與叫貨日，舊版快取自動作廢
 
 function load(): DemoDB {
   try {

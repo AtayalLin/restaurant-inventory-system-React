@@ -20,6 +20,7 @@ const ingredientSchema = z.object({
   // 效期允許留空（= 不會過期），所以用字串接收；有填時必須是正整數
   expiryDays: z.string().refine(v => v === '' || (Number.isInteger(Number(v)) && Number(v) >= 1), '請輸入 1 以上的整數天數，或留空'),
   costPerUnit: num('單位成本'),
+  minOrderQty: num('最低訂購量'),
 })
 type IngredientFormData = z.infer<typeof ingredientSchema>
 
@@ -48,6 +49,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
       safetyStock: ingredient?.safetyStock ?? 0,
       expiryDays: ingredient?.expiryDays?.toString() ?? '',
       costPerUnit: ingredient?.costPerUnit ?? 0,
+      minOrderQty: ingredient?.minOrderQty ?? 0,
     },
   })
 
@@ -69,7 +71,7 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
     else createIngredient(payload, callbacks)
   }
 
-  const numberInput = (key: 'currentStock' | 'safetyStock' | 'costPerUnit', step: string) => (
+  const numberInput = (key: 'currentStock' | 'safetyStock' | 'costPerUnit' | 'minOrderQty', step: string) => (
     <input {...register(key, { valueAsNumber: true })} type="number" min={0} step={step}
       inputMode="decimal" className={`${inputClass(!!errors[key])} tabular`} />
   )
@@ -125,6 +127,10 @@ function IngredientFormModal({ ingredient, onClose }: Props) {
             {numberInput('costPerUnit', '0.001')}
           </Field>
         </div>
+
+        <Field label="最低訂購量" error={errors.minOrderQty?.message} hint="供應商規定一次至少要叫的數量；0 代表不限。建立採購單時會檢查">
+          {numberInput('minOrderQty', '0.01')}
+        </Field>
       </form>
     </Modal>
   )

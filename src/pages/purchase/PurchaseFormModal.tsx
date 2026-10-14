@@ -3,11 +3,12 @@
 import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, X } from 'lucide-react'
+import { AlertTriangle, Plus, X } from 'lucide-react'
 import { useCreatePurchaseOrder } from '../../hooks/usePurchaseOrders'
 import { useSuppliers, useIngredients } from '../../hooks/useIngredients'
 import { Button, Field, Modal, inputClass, useToast, errorMessage } from '../../components/ui'
 import { formatCurrency } from '../../lib/format'
+import { checkPurchaseLines, orderDayNotice, type PurchaseDraft } from '../../lib/orderRules'
 
 const purchaseItemSchema = z.object({
   ingredientId: z.string().min(1, '請選擇食材'),
@@ -25,15 +26,23 @@ type PurchaseFormData = z.infer<typeof purchaseSchema>
 const EMPTY_ITEM = { ingredientId: '', quantity: 1, unitPrice: 0 }
 const today = () => new Date().toISOString().slice(0, 10) // 預計到貨日不能選過去
 
-function PurchaseFormModal({ onClose }: { onClose: () => void }) {
+interface Props {
+  onClose: () => void
+  /** 預先填好的草稿（例如從儀表板「明日預估」一鍵叫貨） */
+  draft?: PurchaseDraft
+}
+
+function PurchaseFormModal({ onClose, draft }: Props) {
   const toast = useToast()
   const { data: suppliers = [] } = useSuppliers()
   const { data: ingredients = [] } = useIngredients()
   const { mutate: createOrder, isPending } = useCreatePurchaseOrder()
 
-  const { register, control, handleSubmit, setValue, formState: { errors } } = useForm<PurchaseFormData>({
+  const { register, control, handleSubmit, setValue, setError, formState: { errors } } = useForm<PurchaseFormData>({
     resolver: zodResolver(purchaseSchema),
-    defaultValues: { supplierId: '', items: [EMPTY_ITEM], expectedDate: '', note: '' },
+    defaultValues: draft
+      ? { supplierId: draft.supplierId, items: draft.items, expectedDate: '', note: '依明日預估自動產生' }
+      : { supplierId: '', items: [EMPTY_ITEM], expectedDate: '', note: '' },
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
 
@@ -42,6 +51,16 @@ function PurchaseFormModal({ onClose }: { onClose: () => void }) {
   const lineTotal = (i: number) => (Number(watchedItems[i]?.quantity) || 0) * (Number(watchedItems[i]?.unitPrice) || 0)
   const totalAmount = watchedItems.reduce((sum, _, i) => sum + lineTotal(i), 0)
 
+  // 只列出這家供應商的食材（以及沒有指定供應商的食材），從源頭避免叫錯
+  const supplierId = useWatch({ control, name: 'supplierId' })
+  const supplier = suppliers.find(s => s.id === supplierId)
+  const ingredientOptions = ingredients.filter(i => !supplierId || !i.supplierId || i.supplierId === supplierId)
+  const dayNotice = orderDayNotice(supplier)
+  const minHint = (index: number) => {
+    const ing = ingredients.find(i => i.id === watchedItems[index]?.ingredientId)
+    return ing?.minOrderQty ? `最低 ${ing.minOrderQty.toLocaleString('zh-TW')} ${ing.unit}` : null
+  }
+
   // 選了食材就自動帶入該食材的單位成本當單價，少打一次字（仍可手動修改）
   function handleIngredientChange(index: number, ingredientId: string) {
     const ing = ingredients.find(i => i.id === ingredientId)
@@ -49,6 +68,12 @@ function PurchaseFormModal({ onClose }: { onClose: () => void }) {
   }
 
   function onSubmit(data: PurchaseFormData) {
+    // 叫貨規則：最低訂購量、供應商不符、重複食材 → 標在對應欄位並阻擋送出
+    const issues = checkPurchaseLines(data.items, ingredients, data.supplierId)
+    if (issues.length > 0) {
+      issues.forEach(i => setError(`items.${i.index}.${i.field}`, { message: i.message }))
+      return
+    }
     createOrder(
       {
         supplierId: data.supplierId,
@@ -90,6 +115,14 @@ function PurchaseFormModal({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
 
+        {/* 非叫貨日提醒：不阻擋，臨時叫貨在實務上很常見 */}
+        {dayNotice && (
+          <p role="status" className="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            {dayNotice}
+          </p>
+        )}
+
         {/* 採購明細：fieldset + legend 讓整組欄位有共同名稱 */}
         <fieldset className="mb-4">
           <div className="mb-2 flex items-center justify-between">
@@ -117,7 +150,7 @@ function PurchaseFormModal({ onClose }: { onClose: () => void }) {
                       className={inputClass(!!e?.ingredientId)}
                     >
                       <option value="">選擇食材</option>
-                      {ingredients.map(i => <option key={i.id} value={i.id}>{i.name}（{i.unit}）</option>)}
+                      {ingredientOptions.map(i => <option key={i.id} value={i.id}>{i.name}（{i.unit}）</option>)}
                     </select>
                     {e?.ingredientId && <p className="mt-1 text-xs text-rose-600">{e.ingredientId.message}</p>}
                   </div>
@@ -126,7 +159,9 @@ function PurchaseFormModal({ onClose }: { onClose: () => void }) {
                     <span className="mb-1 block text-xs text-ink-3 sm:hidden" aria-hidden="true">數量</span>
                     <input {...register(`items.${index}.quantity`, { valueAsNumber: true })} type="number" min={0.01} step={0.01}
                       aria-label={`第 ${index + 1} 列數量`} className={`${inputClass(!!e?.quantity)} tabular`} />
-                    {e?.quantity && <p className="mt-1 text-xs text-rose-600">{e.quantity.message}</p>}
+                    {e?.quantity
+                      ? <p className="mt-1 text-xs text-rose-600">{e.quantity.message}</p>
+                      : minHint(index) && <p className="mt-1 text-xs text-ink-3">{minHint(index)}</p>}
                   </div>
                   <div>
                     {/* 手機版沒有表頭，在欄位上方顯示小標 */}

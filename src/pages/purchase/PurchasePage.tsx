@@ -1,7 +1,8 @@
 // 採購進貨管理頁面 - 對應路由 /purchase
 // 流程：建立採購單（待確認）→ 確認下單（已下單）→ 確認收貨（已收貨，自動增加食材庫存）
 import { useMemo, useState } from 'react'
-import { Check, PackageCheck, Plus, ShoppingCart, X } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Check, PackageCheck, Plus, Printer, ShoppingCart, X } from 'lucide-react'
 import { usePurchaseOrders, useUpdatePurchaseStatus, useReceivePurchaseOrder } from '../../hooks/usePurchaseOrders'
 import { useSuppliers, useIngredients } from '../../hooks/useIngredients'
 import PurchaseFormModal from './PurchaseFormModal'
@@ -12,6 +13,7 @@ import {
 import { useSession } from '../../session/SessionProvider'
 import { formatCurrency } from '../../lib/format'
 import type { PurchaseOrder } from '../../types'
+import type { PurchaseDraft } from '../../lib/orderRules'
 
 type Status = PurchaseOrder['status']
 const STATUS: Record<Status, { label: string; tone: Tone }> = {
@@ -25,7 +27,11 @@ const date = (iso: string) => new Date(iso).toLocaleDateString('zh-TW')
 
 function PurchasePage() {
   const [filterStatus, setFilterStatus] = useState<Status | 'ALL'>('ALL')
-  const [modalOpen, setModalOpen] = useState(false)
+  // 從儀表板「明日預估」帶過來的採購單草稿：有的話一進頁面就打開表單
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [draft, setDraft] = useState<PurchaseDraft | undefined>(() => (location.state as { draft?: PurchaseDraft } | null)?.draft)
+  const [modalOpen, setModalOpen] = useState(() => draft !== undefined)
   const toast = useToast()
   // 採購由總部（中央廚房）統一進貨；店長可查看進度但不能操作
   const canEdit = useSession().can('purchase:edit')
@@ -132,7 +138,12 @@ function PurchasePage() {
                     }
                   })}
                   note={order.note}
-                  actions={canEdit && <>
+                  actions={<>
+                    <Button size="sm" variant="ghost" icon={<Printer size={14} aria-hidden="true" />}
+                      onClick={() => navigate(`/purchase/${order.id}/print`)}>
+                      列印
+                    </Button>
+                    {canEdit && <>
                     {order.status === 'PENDING' && (
                       <Button size="sm" icon={<Check size={14} aria-hidden="true" />}
                         onClick={() => changeStatus(order, 'ORDERED', `確認向「${supplierName}」下單？`, `已向「${supplierName}」下單`)}>
@@ -152,6 +163,7 @@ function PurchasePage() {
                         取消
                       </Button>
                     )}
+                    </>}
                   </>}
                 />
               )
@@ -160,7 +172,16 @@ function PurchasePage() {
         </>
       )}
 
-      {modalOpen && <PurchaseFormModal onClose={() => setModalOpen(false)} />}
+      {modalOpen && (
+        <PurchaseFormModal
+          draft={draft}
+          onClose={() => {
+            setModalOpen(false)
+            setDraft(undefined)
+            navigate('.', { replace: true, state: null }) // 清掉草稿，重新整理不會再跳出
+          }}
+        />
+      )}
     </div>
   )
 }

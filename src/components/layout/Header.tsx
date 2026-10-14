@@ -22,7 +22,7 @@ function Header({ menuOpen, onMenuClick }: HeaderProps) {
   const title = PAGE_TITLES[pathname] ?? '智慧餐飲進銷存'
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 md:px-6">
+    <header className="sticky top-0 z-20 flex print:hidden h-16 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 md:px-6">
       <div className="flex items-center gap-2">
         {/* 漢堡選單：只在手機版顯示 */}
         <button

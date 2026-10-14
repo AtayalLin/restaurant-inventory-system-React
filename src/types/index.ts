@@ -47,6 +47,8 @@ export interface Ingredient {
   safetyStock: number
   expiryDays: number | null
   costPerUnit: number
+  /** 最低訂購量（供應商規定一次至少要叫多少）；未設定或 0 代表不限 */
+  minOrderQty?: number
   createdAt: string
   version: number // 【新增】樂觀鎖版本號，初始為 0，每次更新 +1
 }
@@ -99,6 +101,8 @@ export interface Supplier {
   contact: string
   phone: string
   paymentTerm: string
+  /** 叫貨日（0=週日 … 6=週六）；未設定或空陣列代表每天都可以叫貨 */
+  orderDays?: number[]
   createdAt: string
 }
 

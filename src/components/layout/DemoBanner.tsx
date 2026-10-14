@@ -13,7 +13,7 @@ function DemoBanner() {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-ai-50 px-4 py-2 text-center text-xs text-ai-700">
+    <div className="flex flex-wrap items-center justify-center gap-x-3 print:hidden gap-y-1 bg-ai-50 px-4 py-2 text-center text-xs text-ai-700">
       <span className="inline-flex items-center gap-1.5 font-medium">
         <FlaskConical size={14} aria-hidden="true" />
         線上 Demo
