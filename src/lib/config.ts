@@ -11,6 +11,12 @@
  * NVIDIA 金鑰改由 vite.config.ts 的 proxy 在伺服器端加上（見該檔說明）。
  */
 
+/**
+ * 是否為線上 Demo（vite --mode demo）
+ * Demo 版沒有後端與金鑰，所有 API 與 AI 請求都由 src/mocks 在瀏覽器裡模擬。
+ */
+export const IS_DEMO: boolean = import.meta.env.MODE === 'demo'
+
 /** json-server（或未來的後端）API 路徑前綴，開發時經由 Vite proxy 轉發 */
 export const API_BASE: string = import.meta.env.VITE_API_BASE_URL ?? '/api'
 

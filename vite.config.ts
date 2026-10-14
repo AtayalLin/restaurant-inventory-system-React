@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   console.log('[vite] NVIDIA_API_KEY：', env.NVIDIA_API_KEY ? `已載入（${env.NVIDIA_API_KEY.slice(0, 6)}…）` : '未設定')
   return {
+    // Demo 版部署在 GitHub Pages 的子路徑 https://atayallin.github.io/restaurant-inventory-system-React/
+    // 一般開發與正式版仍使用根路徑 /
+    base: mode === 'demo' ? (env.DEMO_BASE || '/restaurant-inventory-system-React/') : '/',
     plugins: [
       react(),
       tailwindcss(),

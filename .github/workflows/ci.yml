@@ -1,0 +1,32 @@
+# 持續整合：每次 push 或開 Pull Request，自動檢查程式碼能不能通過 lint、型別檢查與建置
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # npm ci：完全依照 package-lock.json 安裝，確保跟本機是同一組套件版本
+      - run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      # build 內含 tsc -b，型別錯誤會讓這一步失敗
+      - name: 型別檢查＋建置
+        run: npm run build
+
+      - name: 建置 Demo 版
+        run: npm run build:demo

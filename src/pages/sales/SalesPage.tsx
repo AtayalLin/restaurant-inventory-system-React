@@ -37,6 +37,9 @@ const CHANNEL_LABEL: Record<SalesOrder['channel'], string> = {
 
 function SalesPage() {
   const [filterStatus, setFilterStatus] = useState<SalesOrder['status'] | 'ALL'>('ALL')
+  // 一次只渲染 PAGE_SIZE 筆，按「顯示更多」再往下載入。
+  // 原本一次渲染全部訂單，資料累積到上百筆後頁面會又長又慢（線上 Demo 有 800 多筆時特別明顯）
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [modalOpen, setModalOpen] = useState(false)
 
   // ── 資料取得 ─────────────────────────────────────────────
@@ -49,9 +52,12 @@ function SalesPage() {
   // id → '招牌牛肉麵' 的查找表
 
   // ── 篩選 ──────────────────────────────────────────────────
-  const filtered = filterStatus === 'ALL'
+  // 新的訂單排在最上面：櫃台最常處理的是剛進來的單
+  const filtered = (filterStatus === 'ALL'
     ? orders
     : orders.filter(o => o.status === filterStatus)
+  ).toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const visible = filtered.slice(0, visibleCount)
 
   // ── 統計 ──────────────────────────────────────────────────
   const pendingCount   = orders.filter(o => o.status === 'PENDING').length
@@ -132,7 +138,8 @@ function SalesPage() {
         {(['ALL', 'PENDING', 'PREPARING', 'COMPLETED', 'REFUNDED'] as const).map(status => (
           <button
             key={status}
-            onClick={() => setFilterStatus(status)}
+            onClick={() => { setFilterStatus(status); setVisibleCount(PAGE_SIZE) }}
+            aria-pressed={filterStatus === status}
             style={{
               padding: '6px 16px', borderRadius: '999px', fontSize: '13px',
               border: '1px solid', cursor: 'pointer',
@@ -160,7 +167,7 @@ function SalesPage() {
             沒有符合條件的訂單
           </div>
         ) : (
-          filtered.map(order => {
+          visible.map(order => {
             const config = STATUS_CONFIG[order.status]
             const canPrepare  = order.status === 'PENDING'
             const canComplete = order.status === 'PREPARING'
@@ -259,6 +266,19 @@ function SalesPage() {
             )
           })
         )}
+        {filtered.length > visibleCount && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+            style={{
+              alignSelf: 'center', padding: '8px 20px', fontSize: '13px', fontWeight: 500,
+              border: '1px solid #E4E8EE', borderRadius: '8px', background: '#fff',
+              color: '#1F3F6B', cursor: 'pointer',
+            }}
+          >
+            顯示更多（已顯示 {visible.length} / {filtered.length} 筆）
+          </button>
+        )}
       </div>
 
       {/* ── Modal ── */}
@@ -266,6 +286,8 @@ function SalesPage() {
     </div>
   )
 }
+
+const PAGE_SIZE = 20
 
 function btnStyle(color: string, bg: string): React.CSSProperties {
   return {

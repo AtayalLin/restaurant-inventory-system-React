@@ -1,5 +1,12 @@
 # 🍜 智慧餐飲進銷存管理系統
 
+[![CI](https://github.com/AtayalLin/restaurant-inventory-system-React/actions/workflows/ci.yml/badge.svg)](https://github.com/AtayalLin/restaurant-inventory-system-React/actions/workflows/ci.yml)
+[![Deploy Demo](https://github.com/AtayalLin/restaurant-inventory-system-React/actions/workflows/deploy-demo.yml/badge.svg)](https://github.com/AtayalLin/restaurant-inventory-system-React/actions/workflows/deploy-demo.yml)
+
+**🔗 線上 Demo：<https://atayallin.github.io/restaurant-inventory-system-React/>**（免安裝，打開即可操作）
+
+![儀表板畫面](docs/screenshots/dashboard.png)
+
 一套為餐飲業打造的進銷存管理系統，整合 AI 自動化功能，協助店家掌握庫存、銷售與營運狀況。本專案為求職作品集，展示前端工程能力與 AI 自動化整合經驗。
 
 ---
@@ -19,7 +26,8 @@
 | 前端框架 | React 19 + TypeScript + Vite |
 | 資料狀態管理 | TanStack Query v5 |
 | 樣式 | Tailwind CSS v4 |
-| Mock 後端 | json-server |
+| Mock 後端 | json-server（本機）、MSW（線上 Demo） |
+| CI/CD | GitHub Actions（lint、型別檢查、建置、自動部署 GitHub Pages） |
 | AI 自動化 | n8n（Docker 自架）+ NVIDIA NIM |
 | 圖表 | Recharts |
 
@@ -88,6 +96,27 @@ docker start n8n       # http://localhost:5678
 - n8n 容器為永久容器（未加 `--rm`），workflow JSON 備份存放於 git 專案目錄外的 `React-Frontendproject/n8n-workflows/`，避免明文金鑰被 commit
 
 ---
+## 🌐 線上 Demo 的做法
+
+線上 Demo 部署在 GitHub Pages，那裡只能放靜態檔案，沒有 json-server、n8n，也不能放 API 金鑰。所以 Demo 版用 [MSW（Mock Service Worker）](https://mswjs.io/) 在瀏覽器裡攔截請求、模擬後端：
+
+- **前端程式碼不用為了 Demo 修改**：hooks 照樣呼叫 `/api/products`、n8n webhook 與 `/nvidia-api`，由 Service Worker 在請求送出前接手回應（`src/mocks/handlers.ts`）。
+- **資料以今天為基準產生**：`src/mocks/seed.ts` 動態產生近 60 天的訂單，任何時候打開，「今日營收」「近 7 天」都有數字。用固定種子的亂數，同一天看到的資料一致。
+- **操作會保留**：新增商品、出餐扣庫存等變更存在訪客自己瀏覽器的 localStorage，重新整理後仍在；頁首可「重設資料」。
+- **AI 功能改為範例回應**：查詢助理的數字一樣由程式從資料計算（與正式版「程式算數字、AI 只負責講話」的設計相同），補貨建議與菜單文案則用範本產生，並在回答中標示為 Demo 範例。
+- **一般版本不含模擬程式碼**：只有 `vite build --mode demo` 才會載入 `src/mocks`。
+
+```bash
+npm run dev:demo     # 本機用 Demo 模式開發（不需要 json-server 與 n8n）
+npm run build:demo   # 建置 Demo 版到 dist/
+```
+
+**部署**：push 到 `main` 後，`.github/workflows/deploy-demo.yml` 會自動建置並部署。第一次使用前，到 repo 的 Settings → Pages → Build and deployment → Source 選「GitHub Actions」。
+
+**CI**：每次 push 與 Pull Request，`.github/workflows/ci.yml` 會跑 ESLint、TypeScript 型別檢查、一般版與 Demo 版建置。
+
+---
+
 ## 開發規劃樹狀圖
 
 > 圖例：✅ 已完成　🔄 開發中／待驗證　🔲 待辦

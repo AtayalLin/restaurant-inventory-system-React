@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "dev:demo": "vite --mode demo",
+    "build:demo": "tsc -b && vite build --mode demo && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "json-server db/db.json --port 3001"
@@ -37,9 +40,15 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "json-server": "^1.0.0-beta.15",
+    "msw": "^2.15.0",
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

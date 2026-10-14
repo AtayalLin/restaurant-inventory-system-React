@@ -13,8 +13,9 @@ import NotFoundPage from './pages/NotFoundPage'
 // 【修正 Bug 4】補上匯入，否則畫面已經寫好但路由沒接，使用者永遠進不去
 
 function App() {
+  // basename：部署在 GitHub Pages 子路徑（/restaurant-inventory-system-React/）時，路由要以它為根
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
