@@ -27,7 +27,8 @@
 | 資料狀態管理 | TanStack Query v5 |
 | 樣式 | Tailwind CSS v4 |
 | Mock 後端 | json-server（本機）、MSW（線上 Demo） |
-| CI/CD | GitHub Actions（lint、型別檢查、建置、自動部署 GitHub Pages） |
+| 測試 | Vitest＋MSW（在 Node 以模擬後端跑整合測試） |
+| CI/CD | GitHub Actions（lint、測試、型別檢查、建置、自動部署 GitHub Pages） |
 | AI 自動化 | n8n（Docker 自架）+ NVIDIA NIM |
 | 圖表 | Recharts |
 
@@ -113,7 +114,23 @@ npm run build:demo   # 建置 Demo 版到 dist/
 
 **部署**：push 到 `main` 後，`.github/workflows/deploy-demo.yml` 會自動建置並部署。第一次使用前，到 repo 的 Settings → Pages → Build and deployment → Source 選「GitHub Actions」。
 
-**CI**：每次 push 與 Pull Request，`.github/workflows/ci.yml` 會跑 ESLint、TypeScript 型別檢查、一般版與 Demo 版建置。
+**CI**：每次 push 與 Pull Request，`.github/workflows/ci.yml` 會跑 ESLint、測試、TypeScript 型別檢查、一般版與 Demo 版建置。
+
+### 🧪 測試
+
+```bash
+npm test          # 執行全部測試
+npm run test:watch  # 開發時監看模式
+```
+
+測試直接沿用 Demo 的 MSW 模擬後端（`src/test/setup.ts`），不需要啟動 json-server，涵蓋：
+
+- **金額計算**：營業稅 5% 無條件捨去、總計、成長率（上期為 0 時不顯示百分比）
+- **出餐扣庫存**：依配方扣減、同食材跨商品合併計算、庫存不足時全部不扣
+- **樂觀鎖**：採購收貨增加庫存並遞增版本號、扣成負數時拒絕
+- **查詢助理**：意圖判斷、排行榜排序、補貨建議數量
+
+測試固定「現在時間」，結果不會隨日期改變。
 
 ---
 
@@ -158,11 +175,48 @@ npm run build:demo   # 建置 Demo 版到 dist/
 │       └── Tool-Calling 架構遷移 🔲
 │           （由 Intent 分類 + if/else 改為治理過的工具選擇）
 │
-└── 資料完整性 🔲
-    └── stockLogs 寫入邏輯
-        ├── 銷售完成 → 依 recipe 扣減 ingredient.currentStock
-        └── 採購到貨 → 加回 ingredient.currentStock
+├── 資料完整性 ✅
+│   └── stockLogs 寫入邏輯
+│       ├── 銷售完成 → 依 recipe 扣減 ingredient.currentStock
+│       └── 採購到貨 → 加回 ingredient.currentStock
+│
+├── 工程品質
+│   ├── 共用 UI 元件與設計 token ✅
+│   ├── GitHub Actions CI（lint、型別檢查、建置）✅
+│   ├── 線上 Demo（MSW + GitHub Pages）✅
+│   └── Vitest 單元／整合測試（已加入 CI）✅
+│
+└── 對標業界的下一階段（依序進行）
+    ├── ① Vitest 單元測試並加入 CI ✅
+    ├── ② 需求預測＋叫貨建議 🔲
+    │   （近 4 週同星期平均銷量 → 依配方換算食材用量 → AI 只負責解釋）
+    ├── ③ 多門市切換＋角色權限（總部／店長／員工）🔲
+    ├── ④ 叫貨規則：最低訂購量、供應商叫貨日、缺貨阻擋、列印採購單 🔲
+    └── ⑤ Spring Boot + MySQL 後端、JWT 權限 🔲
 ```
+
+### 業界需求對照（2026/10 調查）
+
+開發方向參考台灣大型餐飲集團與餐飲 POS 業者的公開資料，確認專案功能對應真實需求，而不是只做 CRUD 練習。
+
+| 業界需求 | 業界案例 | 本專案對應 |
+|---|---|---|
+| 成本毛利管理、供需協同 | 王品與鼎新數智建置新一代資訊核心平台，聚焦供需協同、門店營運、成本毛利管理，為多品牌擴張打基礎 | ✅ 配方扣庫存、商品毛利率排行 |
+| 總部多門市管理 | iCHEF 總部系統：跨店菜單統一、跨店業績與商品排行、跨店會員，規劃 API 對接 ERP | 🔲 ③ 多門市＋角色權限 |
+| 門市叫貨流程 | iCHEF 門市訂貨管理：依供應商規則訂貨、缺貨自動阻擋、產生撿貨出貨單 | 🟡 採購單流程已完成；🔲 ④ 叫貨規則 |
+| AI 預測客流與銷售 | iCHEF 與 Google 等推出連鎖 AI 助手「春嬌」，整合 POS、會員、庫存資料預測客流與銷售 | 🟡 AI 補貨建議；🔲 ② 需求預測 |
+| AI 報表解讀 | iCHEF AI 報表解讀讓每週分析從約 2 小時縮短到 5 分鐘 | ✅ 自然語言查詢助理（程式算數字、AI 組句） |
+| AI 中央廚房 | 高雄「大南方新矽谷」AI 中央廚房補助：產線智慧化、數位食譜 | ⚪ 暫不實作，列為延伸方向 |
+
+**設計呼應**：「春嬌」的使用者回饋指出，整合後的分析比自行把資料丟給語言模型處理更穩定，與本專案 Agent B「數字由程式計算、AI 只負責說明」的設計方向一致。
+
+資料來源：
+[科技新報－王品新一代資訊核心平台](https://cdn.technews.tw/2026/02/23/information-core-platform/)、
+[CIO Taiwan－iCHEF AI 與春嬌](https://www.cio.com.tw/100400/)、
+[工商時報－iCHEF AI 應用成效](https://www.ctee.com.tw/news/20260616701510-430503)、
+[INSIDE－iCHEF 總部系統](https://www.inside.com.tw/article/29154-ichef-10-years)、
+[INSIDE－iCHEF 門市訂貨管理](https://www.inside.com.tw/article/31318-ichef-inventory-system)、
+[工商時報－AI 中央廚房補助](https://www.ctee.com.tw/news/20260427700098-430104)
 ---
 
 ## 🎨 設計系統

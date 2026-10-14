@@ -9,10 +9,12 @@ interface ModalProps {
   footer?: ReactNode
   /** 送出中時禁止關閉，避免請求進行到一半就把表單關掉 */
   busy?: boolean
+  /** 寬版：含多列明細的表單（採購單、銷售訂單）使用 */
+  wide?: boolean
 }
 
 /** 共用對話框：遮罩點擊、Esc 都可關閉；role="dialog" 讓螢幕閱讀器知道這是對話框 */
-export function Modal({ title, onClose, children, footer, busy = false }: ModalProps) {
+export function Modal({ title, onClose, children, footer, busy = false, wide = false }: ModalProps) {
   const titleId = useId() // 給 aria-labelledby 用，對話框名稱 = 標題
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function Modal({ title, onClose, children, footer, busy = false }: ModalP
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={e => e.stopPropagation()} // 點內容不關閉
-        className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-[var(--radius-card)] bg-white shadow-2xl"
+        className={`flex max-h-[85vh] w-full flex-col ${wide ? 'max-w-2xl' : 'max-w-lg'} rounded-[var(--radius-card)] bg-white shadow-2xl`}
       >
         <header className="flex items-center justify-between border-b border-line px-6 py-4">
           <h3 id={titleId} className="text-lg font-semibold text-ink">{title}</h3>

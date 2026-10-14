@@ -1,349 +1,178 @@
+// 新增銷售訂單的對話框
+// 選商品自動帶入售價；小計、5% 營業稅、折扣、總計即時計算（稅額算法與後端共用 calcTax）
 import { useForm, useFieldArray, useWatch } from 'react-hook-form'
-// useForm：管理表單狀態
-// useFieldArray：動態訂單明細列（同 PurchaseFormModal 設計）
-// useWatch：監聽 items 即時計算金額
-
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-
+import { Plus, X } from 'lucide-react'
 import { useCreateSalesOrder, calcTax, calcTotal } from '../../hooks/useSalesOrders'
-// 關聯：src/hooks/useSalesOrders.ts
-// calcTax：Math.floor(subtotal * 5 / 100)，無條件捨去至整數
-// calcTotal：Math.round(subtotal + taxAmount - discount)，四捨五入至整數
-
 import { useProducts } from '../../hooks/useProducts'
-// 關聯：src/hooks/useProducts.ts
-// GET /api/products（商品下拉選單，帶入售價）
+import { Button, Field, Modal, inputClass, useToast, errorMessage } from '../../components/ui'
+import { formatCurrency } from '../../lib/format'
+import type { SalesChannel } from '../../types'
 
-// ── Zod Schema ────────────────────────────────────────────
 const salesItemSchema = z.object({
   productId: z.string().min(1, '請選擇商品'),
-  quantity:  z.number().min(1, '數量至少 1'),
-  unitPrice: z.number().min(0, '單價不可為負數'),
-  // unitPrice：從商品售價帶入，但允許修改（特殊優惠）
+  quantity: z.number({ error: '請輸入數量' }).int('數量須為整數').min(1, '數量至少 1'),
+  unitPrice: z.number({ error: '請輸入單價' }).min(0, '單價不可為負數'),
 })
-
 const salesSchema = z.object({
   channel: z.enum(['DINE_IN', 'TAKEOUT', 'DELIVERY']),
-  // 銷售渠道：內用 / 外帶 / 外送
   items: z.array(salesItemSchema).min(1, '至少需要一筆訂單明細'),
-  discount: z.number().min(0, '折扣不可為負數'),
-  // 折扣金額：選填，預設 0
+  discount: z.number({ error: '請輸入折扣，沒有請填 0' }).min(0, '折扣不可為負數'),
   note: z.string().max(200, '備註最多 200 字'),
+}).superRefine((data, ctx) => {
+  // 折扣不能超過應付金額，否則總計會變成負數
+  const subtotal = data.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+  if (data.discount > subtotal + calcTax(subtotal)) {
+    ctx.addIssue({ code: 'custom', path: ['discount'], message: '折扣不可超過小計加稅' })
+  }
 })
-
 type SalesFormData = z.infer<typeof salesSchema>
 
-interface Props {
-  onClose: () => void
-}
+const CHANNELS: { value: SalesChannel; label: string }[] = [
+  { value: 'DINE_IN', label: '內用' },
+  { value: 'TAKEOUT', label: '外帶' },
+  { value: 'DELIVERY', label: '外送' },
+]
+const EMPTY_ITEM = { productId: '', quantity: 1, unitPrice: 0 }
 
-function SalesFormModal({ onClose }: Props) {
+function SalesFormModal({ onClose }: { onClose: () => void }) {
+  const toast = useToast()
   const { data: products = [] } = useProducts()
-  // 商品列表，用於下拉選單和帶入售價
-
-  const activeProducts = products.filter(p => p.isActive)
-  // 只顯示上架中的商品，下架商品不應出現在點餐選單
-
+  const activeProducts = products.filter(p => p.isActive) // 已下架的商品不能點
   const { mutate: createOrder, isPending } = useCreateSalesOrder()
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    setValue,
-    // setValue：選擇商品後自動帶入 unitPrice
-    formState: { errors },
-  } = useForm<SalesFormData>({
+  const { register, control, handleSubmit, setValue, formState: { errors } } = useForm<SalesFormData>({
     resolver: zodResolver(salesSchema),
-    defaultValues: {
-      channel:  'DINE_IN',
-      items:    [{ productId: '', quantity: 1, unitPrice: 0 }],
-      discount: 0,
-      note:     '',
-    },
+    defaultValues: { channel: 'DINE_IN', items: [EMPTY_ITEM], discount: 0, note: '' },
   })
-
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
 
-  const watchedItems    = useWatch({ control, name: 'items' })
-  const watchedDiscount = useWatch({ control, name: 'discount' })
-  // 監聽折扣欄位，即時更新總計
-
-  // ── 即時金額計算 ──────────────────────────────────────
-  const subtotal = (watchedItems ?? []).reduce((sum, item) => {
-    return sum + (Number(item?.quantity) || 0) * (Number(item?.unitPrice) || 0)
-  }, 0)
-  // subtotal：所有明細的 數量 × 單價 加總，不含稅
-
+  // 即時金額：明細或折扣一變動就重算
+  const watchedItems = useWatch({ control, name: 'items' }) ?? []
+  const discount = Number(useWatch({ control, name: 'discount' })) || 0
+  const lineTotal = (i: number) => (Number(watchedItems[i]?.quantity) || 0) * (Number(watchedItems[i]?.unitPrice) || 0)
+  const subtotal = watchedItems.reduce((sum, _, i) => sum + lineTotal(i), 0)
   const taxAmount = calcTax(subtotal)
-  // taxAmount：Math.floor(subtotal * 5 / 100)，無條件捨去
-  // 範例：subtotal=245 → taxAmount=Math.floor(12.25)=12
+  const total = calcTotal(subtotal, taxAmount, discount)
 
-  const discount = Number(watchedDiscount) || 0
-  const total    = calcTotal(subtotal, taxAmount, discount)
-  // total：Math.round(subtotal + taxAmount - discount)，四捨五入至整數
-
-  // ── 選擇商品時自動帶入售價 ────────────────────────────
   function handleProductChange(index: number, productId: string) {
     const product = products.find(p => p.id === productId)
-    if (product) {
-      setValue(`items.${index}.unitPrice`, product.price)
-      // setValue：直接更新 react-hook-form 的欄位值
-      // 為什麼用 setValue 不用 onChange：
-      //   select 的 onChange 只能拿到 event.target.value（string）
-      //   需要額外查詢商品售價，只能透過 setValue 更新另一個欄位
-    }
+    if (product) setValue(`items.${index}.unitPrice`, product.price, { shouldValidate: true })
   }
 
-// ── 表單送出 ──────────────────────────────────────────
   function onSubmit(data: SalesFormData) {
     createOrder(
+      { status: 'PENDING', items: data.items, subtotal, taxAmount, discount: data.discount, total, channel: data.channel, note: data.note, testBatchId: null },
       {
-        status:    'PENDING',
-        items:     data.items,
-        subtotal,
-        taxAmount,
-        discount:  data.discount,
-        total,
-        channel:   data.channel,
-        note:      data.note,
-        testBatchId: null, // 【修正 Bug 2】SalesOrder.testBatchId 已改必填，一般下單固定傳 null
+        onSuccess: () => { toast.success(`訂單已建立，金額 ${formatCurrency(total)}`); onClose() },
+        onError: err => toast.error(errorMessage(err, '建立失敗，請稍後再試')),
       },
-      { onSuccess: onClose }
     )
   }
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-      }}
+    <Modal
+      title="新增訂單"
+      wide
+      onClose={onClose}
+      busy={isPending}
+      footer={<>
+        <Button variant="secondary" onClick={onClose} disabled={isPending}>取消</Button>
+        <Button type="submit" form="sales-form" loading={isPending}>建立訂單</Button>
+      </>}
     >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#fff', borderRadius: '12px', padding: '32px',
-          width: '580px', maxWidth: '90vw', maxHeight: '85vh',
-          overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-        }}
-      >
-        {/* 標題列 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', color: '#1E3A5F' }}>新增訂單</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6B7480' }}>✕</button>
-        </div>
+      <form id="sales-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        {/* 用餐方式：radio 包在 label 裡，整塊都可以點 */}
+        <fieldset className="mb-4">
+          <legend className="mb-1.5 text-[13px] font-medium text-ink-2">用餐方式</legend>
+          <div className="flex gap-2">
+            {CHANNELS.map(ch => (
+              <label key={ch.value}
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm text-ink-2 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50 has-[:checked]:font-semibold has-[:checked]:text-brand-700">
+                <input {...register('channel')} type="radio" value={ch.value} className="accent-brand-700" />
+                {ch.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-
-          {/* 銷售渠道 */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>銷售渠道</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {(['DINE_IN', 'TAKEOUT', 'DELIVERY'] as const).map(ch => (
-                <label
-                  key={ch}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '8px 16px', border: '1px solid #E4E8EE',
-                    borderRadius: '8px', cursor: 'pointer', fontSize: '14px',
-                  }}
-                >
-                  <input {...register('channel')} type="radio" value={ch} />
-                  {ch === 'DINE_IN' ? '🍽️ 內用' : ch === 'TAKEOUT' ? '🥡 外帶' : '🛵 外送'}
-                </label>
-              ))}
-            </div>
+        <fieldset className="mb-4">
+          <div className="mb-2 flex items-center justify-between">
+            <legend className="text-[13px] font-medium text-ink-2">訂單明細<span className="ml-0.5 text-rose-600" aria-hidden="true">*</span></legend>
+            <Button variant="ghost" size="sm" icon={<Plus size={14} aria-hidden="true" />} onClick={() => append(EMPTY_ITEM)}>
+              新增品項
+            </Button>
           </div>
 
-          {/* 訂單明細 */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={labelStyle}>訂單明細 <span style={{ color: '#E11D48' }}>*</span></label>
-              <button
-                type="button"
-                onClick={() => append({ productId: '', quantity: 1, unitPrice: 0 })}
-                style={{
-                  padding: '4px 12px', fontSize: '13px',
-                  border: '1px solid #1F3F6B', borderRadius: '4px',
-                  background: '#EEF3F9', color: '#1F3F6B', cursor: 'pointer',
-                }}
-              >
-                ＋ 新增品項
-              </button>
-            </div>
+          <div className="hidden grid-cols-[2fr_80px_1fr_96px_32px] gap-2 px-1 pb-1 text-xs text-ink-3 sm:grid" aria-hidden="true">
+            <span>商品</span><span>數量</span><span>單價</span><span className="text-right">小計</span><span />
+          </div>
 
-            {/* 表頭 */}
-            <div style={{
-              display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
-              gap: '8px', padding: '8px 0', borderBottom: '1px solid #E4E8EE',
-              fontSize: '12px', color: '#6B7480', fontWeight: 500,
-            }}>
-              <span>商品</span><span>數量</span><span>單價</span><span>小計</span><span></span>
-            </div>
-
-            {/* 明細列 */}
+          <div className="space-y-2">
             {fields.map((field, index) => {
-              const qty   = Number(watchedItems?.[index]?.quantity)  || 0
-              const price = Number(watchedItems?.[index]?.unitPrice) || 0
-
+              const e = errors.items?.[index]
+              const productField = register(`items.${index}.productId`)
               return (
-                <div key={field.id} style={{
-                  display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
-                  gap: '8px', padding: '8px 0', borderBottom: '1px solid #EEF1F5', alignItems: 'start',
-                }}>
-                  {/* 商品選擇 */}
-                  <div>
+                <div key={field.id} className="grid grid-cols-2 items-start gap-2 rounded-lg bg-canvas p-2 sm:grid-cols-[2fr_80px_1fr_96px_32px] sm:bg-transparent sm:p-0">
+                  <div className="col-span-2 sm:col-span-1">
                     <select
-                      {...register(`items.${index}.productId`)}
-                      onChange={e => {
-                        register(`items.${index}.productId`).onChange(e)
-                        handleProductChange(index, e.target.value)
-                        // 先執行 react-hook-form 的 onChange，再帶入售價
-                      }}
-                      style={inputStyle(!!errors.items?.[index]?.productId)}
+                      {...productField}
+                      onChange={ev => { productField.onChange(ev); handleProductChange(index, ev.target.value) }}
+                      aria-label={`第 ${index + 1} 列商品`}
+                      className={inputClass(!!e?.productId)}
                     >
                       <option value="">選擇商品</option>
-                      {activeProducts.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}（NT$ {p.price}）
-                        </option>
-                      ))}
+                      {activeProducts.map(p => <option key={p.id} value={p.id}>{p.name}（NT$ {p.price}）</option>)}
                     </select>
-                    {errors.items?.[index]?.productId && (
-                      <p style={errorStyle}>{errors.items[index].productId.message}</p>
-                    )}
+                    {e?.productId && <p className="mt-1 text-xs text-rose-600">{e.productId.message}</p>}
                   </div>
-
-                  {/* 數量 */}
                   <div>
-                    <input
-                      {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                      type="number" min={1} style={inputStyle(!!errors.items?.[index]?.quantity)}
-                    />
+                    {/* 手機版沒有表頭，在欄位上方顯示小標 */}
+                    <span className="mb-1 block text-xs text-ink-3 sm:hidden" aria-hidden="true">數量</span>
+                    <input {...register(`items.${index}.quantity`, { valueAsNumber: true })} type="number" min={1} step={1}
+                      aria-label={`第 ${index + 1} 列數量`} className={`${inputClass(!!e?.quantity)} tabular`} />
+                    {e?.quantity && <p className="mt-1 text-xs text-rose-600">{e.quantity.message}</p>}
                   </div>
-
-                  {/* 單價（可修改） */}
                   <div>
-                    <input
-                      {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                      type="number" min={0} style={inputStyle(!!errors.items?.[index]?.unitPrice)}
-                    />
+                    {/* 手機版沒有表頭，在欄位上方顯示小標 */}
+                    <span className="mb-1 block text-xs text-ink-3 sm:hidden" aria-hidden="true">單價</span>
+                    <input {...register(`items.${index}.unitPrice`, { valueAsNumber: true })} type="number" min={0}
+                      aria-label={`第 ${index + 1} 列單價`} className={`${inputClass(!!e?.unitPrice)} tabular`} />
+                    {e?.unitPrice && <p className="mt-1 text-xs text-rose-600">{e.unitPrice.message}</p>}
                   </div>
-
-                  {/* 小計 */}
-                  <div style={{ padding: '8px 0', fontSize: '14px', color: '#4A5565', fontWeight: 500 }}>
-                    NT$ {(qty * price).toLocaleString()}
-                  </div>
-
-                  {/* 刪除 */}
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    disabled={fields.length === 1}
-                    style={{
-                      padding: '6px', border: 'none', background: 'none',
-                      color: fields.length === 1 ? '#CBD2DB' : '#E11D48',
-                      cursor: fields.length === 1 ? 'not-allowed' : 'pointer', fontSize: '16px',
-                    }}
-                  >✕</button>
+                  <div className="tabular self-center text-sm font-medium text-ink-2 sm:text-right">{formatCurrency(lineTotal(index))}</div>
+                  <button type="button" onClick={() => remove(index)} disabled={fields.length === 1}
+                    aria-label={`刪除第 ${index + 1} 列`}
+                    className="justify-self-end self-center rounded-lg p-1.5 text-ink-3 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 disabled:hover:bg-transparent">
+                    <X size={16} />
+                  </button>
                 </div>
               )
             })}
           </div>
+          {errors.items?.root && <p className="mt-1 text-xs text-rose-600">{errors.items.root.message}</p>}
+        </fieldset>
 
-          {/* 折扣 */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>折扣金額（元）</label>
-            <input
-              {...register('discount', { valueAsNumber: true })}
-              type="number" min={0} placeholder="0"
-              style={inputStyle(false)}
-            />
-          </div>
+        <div className="grid gap-x-4 sm:grid-cols-2">
+          <Field label="折扣（元）" error={errors.discount?.message}>
+            <input {...register('discount', { valueAsNumber: true })} type="number" min={0} className={`${inputClass(!!errors.discount)} tabular`} />
+          </Field>
+          <Field label="備註" error={errors.note?.message}>
+            <input {...register('note')} placeholder="選填，例：不加辣" className={inputClass(!!errors.note)} />
+          </Field>
+        </div>
 
-          {/* 金額明細 */}
-          <div style={{
-            background: '#F5F7FA', borderRadius: '12px', padding: '16px',
-            marginBottom: '16px', fontSize: '14px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6B7480' }}>
-              <span>小計</span>
-              <span>NT$ {subtotal.toLocaleString()}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6B7480' }}>
-              <span>營業稅（5%，無條件捨去）</span>
-              <span>NT$ {taxAmount.toLocaleString()}</span>
-            </div>
-            {discount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#E11D48' }}>
-                <span>折扣</span>
-                <span>－ NT$ {discount.toLocaleString()}</span>
-              </div>
-            )}
-            <div style={{
-              display: 'flex', justifyContent: 'space-between',
-              paddingTop: '8px', borderTop: '1px solid #E4E8EE',
-              fontWeight: 700, fontSize: '16px', color: '#1E3A5F',
-            }}>
-              <span>總計</span>
-              <span>NT$ {total.toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* 備註 */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={labelStyle}>備註</label>
-            <textarea
-              {...register('note')} rows={2} placeholder="選填，例：不加辣、外帶袋 ×2"
-              style={{ ...inputStyle(false), resize: 'vertical' }}
-            />
-          </div>
-
-          {/* 按鈕列 */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-            <button
-              type="button" onClick={onClose} disabled={isPending}
-              style={{
-                padding: '10px 20px', border: '1px solid #E4E8EE', borderRadius: '8px',
-                background: '#fff', fontSize: '14px', cursor: 'pointer', color: '#4A5565',
-              }}
-            >取消</button>
-            <button
-              type="submit" disabled={isPending}
-              style={{
-                padding: '10px 20px', border: 'none', borderRadius: '8px',
-                background: isPending ? '#B4C8E2' : '#1F3F6B',
-                fontSize: '14px', cursor: isPending ? 'not-allowed' : 'pointer', color: '#fff',
-              }}
-            >
-              {isPending ? '建立中...' : '建立訂單'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* 金額明細 */}
+        <dl className="tabular space-y-1.5 rounded-lg bg-brand-50 px-4 py-3 text-sm">
+          <div className="flex justify-between text-ink-2"><dt>小計</dt><dd>{formatCurrency(subtotal)}</dd></div>
+          <div className="flex justify-between text-ink-2"><dt>營業稅（5%，無條件捨去）</dt><dd>{formatCurrency(taxAmount)}</dd></div>
+          {discount > 0 && <div className="flex justify-between text-rose-600"><dt>折扣</dt><dd>－ {formatCurrency(discount)}</dd></div>}
+          <div className="flex justify-between border-t border-brand-200 pt-1.5 text-base font-bold text-brand-800"><dt>總計</dt><dd>{formatCurrency(total)}</dd></div>
+        </dl>
+      </form>
+    </Modal>
   )
-}
-
-// ── 共用樣式 ──────────────────────────────────────────────────
-function inputStyle(hasError: boolean): React.CSSProperties {
-  return {
-    width: '100%', padding: '7px 10px',
-    border: `1px solid ${hasError ? '#E11D48' : '#E4E8EE'}`,
-    borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
-  }
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', marginBottom: '6px',
-  fontSize: '13px', fontWeight: 500, color: '#4A5565',
-}
-
-const errorStyle: React.CSSProperties = {
-  margin: '4px 0 0', fontSize: '12px', color: '#E11D48',
 }
 
 export default SalesFormModal

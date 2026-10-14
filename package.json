@@ -9,6 +9,8 @@
     "dev:demo": "vite --mode demo",
     "build:demo": "tsc -b && vite build --mode demo && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "json-server db/db.json --port 3001"
@@ -44,7 +46,8 @@
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.11"
   },
   "msw": {
     "workerDirectory": [

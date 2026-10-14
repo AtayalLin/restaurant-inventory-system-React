@@ -24,6 +24,10 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      # 單元／整合測試：計算邏輯、出餐扣庫存、樂觀鎖（以 MSW 模擬後端）
+      - name: 測試
+        run: npm test
+
       # build 內含 tsc -b，型別錯誤會讓這一步失敗
       - name: 型別檢查＋建置
         run: npm run build

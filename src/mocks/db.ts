@@ -34,6 +34,11 @@ export function persist(): void {
   }
 }
 
+/** 測試用：把記憶體中的資料庫換成一份全新的種子資料（直接修改同一個物件，handlers 拿到的參考不變） */
+export function resetDb(now = new Date()): void {
+  Object.assign(db, createSeed(now))
+}
+
 export function resetDemoData(): void {
   try {
     localStorage.removeItem(STORAGE_KEY)

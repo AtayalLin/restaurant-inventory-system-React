@@ -1,362 +1,165 @@
-import { useState } from 'react'
-// useState：管理 Modal 開關、篩選狀態等 UI 狀態
-
-import {
-  usePurchaseOrders,
-  useUpdatePurchaseStatus,
-  useReceivePurchaseOrder,
-} from '../../hooks/usePurchaseOrders'
-// 關聯：src/hooks/usePurchaseOrders.ts
-// usePurchaseOrders：GET /api/purchaseOrders
-// useUpdatePurchaseStatus：PATCH status（PENDING→ORDERED 或 →CANCELLED）
-// useReceivePurchaseOrder：PATCH status=RECEIVED + 更新所有食材庫存
-
+// 採購進貨管理頁面 - 對應路由 /purchase
+// 流程：建立採購單（待確認）→ 確認下單（已下單）→ 確認收貨（已收貨，自動增加食材庫存）
+import { useMemo, useState } from 'react'
+import { Check, PackageCheck, Plus, ShoppingCart, X } from 'lucide-react'
+import { usePurchaseOrders, useUpdatePurchaseStatus, useReceivePurchaseOrder } from '../../hooks/usePurchaseOrders'
 import { useSuppliers, useIngredients } from '../../hooks/useIngredients'
-// 關聯：src/hooks/useIngredients.ts
-// 供應商列表用於顯示採購單的供應商名稱
-// 食材列表用於顯示採購明細中的食材名稱
-
 import PurchaseFormModal from './PurchaseFormModal'
-// 關聯：src/pages/purchase/PurchaseFormModal.tsx（下一步建立）
-
+import {
+  Badge, Button, EmptyState, FilterTabs, OrderCard, PageHeader, TableSkeleton,
+  useToast, errorMessage, type Tone,
+} from '../../components/ui'
+import { formatCurrency } from '../../lib/format'
 import type { PurchaseOrder } from '../../types'
-// 關聯：src/types/index.ts
-// PurchaseOrder：{ id, supplierId, status, items, totalAmount, expectedDate, note, createdAt }
 
-
-// ── 狀態顯示對照表 ────────────────────────────────────────
-// 為什麼用 Map 不用 if/else：
-//   四種狀態各有不同的顏色、文字、可執行動作
-//   集中定義讓邏輯清晰，新增狀態時只改這裡
-const STATUS_CONFIG: Record<PurchaseOrder['status'], {
-  label: string
-  color: string
-  bg: string
-}> = {
-  PENDING:   { label: '待確認', color: '#B45309', bg: '#FEF3C7' },
-  // 待確認：剛建立，尚未向供應商下單
-  ORDERED:   { label: '已下單', color: '#2B5287', bg: '#D9E4F1' },
-  // 已下單：已通知供應商，等待送達
-  RECEIVED:  { label: '已收貨', color: '#047857', bg: '#D1FAE5' },
-  // 已收貨：貨品已到，庫存已更新
-  CANCELLED: { label: '已取消', color: '#6B7480', bg: '#EEF1F5' },
-  // 已取消：訂單作廢
+type Status = PurchaseOrder['status']
+const STATUS: Record<Status, { label: string; tone: Tone }> = {
+  PENDING: { label: '待確認', tone: 'warning' },
+  ORDERED: { label: '已下單', tone: 'brand' },
+  RECEIVED: { label: '已收貨', tone: 'success' },
+  CANCELLED: { label: '已取消', tone: 'neutral' },
 }
+const STATUS_ORDER: Status[] = ['PENDING', 'ORDERED', 'RECEIVED', 'CANCELLED']
+const date = (iso: string) => new Date(iso).toLocaleDateString('zh-TW')
 
 function PurchasePage() {
-  // ── UI 狀態 ──────────────────────────────────────────────
-  const [filterStatus, setFilterStatus] = useState<PurchaseOrder['status'] | 'ALL'>('ALL')
-  // 篩選狀態，ALL 代表顯示全部
-  // 為什麼用 union type：限制只能是合法的狀態值或 'ALL'
-
+  const [filterStatus, setFilterStatus] = useState<Status | 'ALL'>('ALL')
   const [modalOpen, setModalOpen] = useState(false)
-  // 控制新增採購單 Modal 的開關
-  // 注意：採購單建立後不允許編輯（需要先取消再重建），所以不需要 editingOrder
+  const toast = useToast()
 
-  // ── 資料取得 ─────────────────────────────────────────────
   const { data: orders = [], isLoading } = usePurchaseOrders()
-  // orders 預設 []，避免 isLoading 期間 .filter() 出錯
-
   const { data: suppliers = [] } = useSuppliers()
-  // 供應商列表，用於建立 id→名稱 查找 Map
-
-  const { mutate: updateStatus } = useUpdatePurchaseStatus()
-  // 更新採購單狀態（下單/取消）
-
-  const { mutate: receiveOrder, isPending: isReceiving } = useReceivePurchaseOrder()
-  // 確認收貨（同時更新食材庫存）
-  // isPending：收貨操作執行中，防止重複點擊
-
-  // ── 供應商 Map ────────────────────────────────────────────
-  const supplierMap = new Map(suppliers.map(s => [s.id, s.name]))
-  // 結果範例：Map { 's001' => '台灣生鮮肉品行' }
-  // 為什麼不用 useMemo：suppliers 不常變動，直接建立 Map 效能足夠
-
   const { data: ingredients = [] } = useIngredients()
-  const ingredientMap = new Map(ingredients.map(i => [i.id, `${i.name}（${i.unit}）`]))
-  // id → '牛腱肉（g）' 的查找表
+  const { mutate: updateStatus } = useUpdatePurchaseStatus()
+  // variables：目前正在收貨的那張單，只讓那一張的按鈕顯示 loading
+  const { mutate: receiveOrder, isPending: isReceiving, variables: receivingOrder } = useReceivePurchaseOrder()
 
-  // ── 前端篩選 ──────────────────────────────────────────────
-  const filtered = filterStatus === 'ALL'
-    ? orders
-    : orders.filter(o => o.status === filterStatus)
-  // 'ALL' 時直接回傳全部，否則篩選指定狀態
+  const supplierMap = useMemo(() => new Map(suppliers.map(s => [s.id, s.name])), [suppliers])
+  const ingredientMap = useMemo(() => new Map(ingredients.map(i => [i.id, i])), [ingredients])
 
-  // ── 統計數字 ──────────────────────────────────────────────
-  const pendingCount = orders.filter(o => o.status === 'PENDING').length
-  const orderedCount = orders.filter(o => o.status === 'ORDERED').length
-  // 用於頁首顯示待處理數量，讓老闆一眼掌握待辦事項
+  // 各狀態數量只算一次，篩選按鈕與標題列共用
+  const counts = useMemo(() => {
+    const c = { ALL: orders.length } as Record<Status | 'ALL', number>
+    for (const s of STATUS_ORDER) c[s] = 0
+    for (const o of orders) c[o.status]++
+    return c
+  }, [orders])
 
-  // ── 事件處理 ──────────────────────────────────────────────
-  function handleConfirmOrder(order: PurchaseOrder) {
-    // PENDING → ORDERED：確認向供應商下單
-    if (!window.confirm(`確認向「${supplierMap.get(order.supplierId) ?? '供應商'}」下單？`)) return
-    updateStatus({ id: order.id, status: 'ORDERED' })
+  // 新的採購單排在最上面
+  const filtered = useMemo(() =>
+    (filterStatus === 'ALL' ? orders : orders.filter(o => o.status === filterStatus))
+      .toSorted((a, b) => b.createdAt.localeCompare(a.createdAt)),
+  [orders, filterStatus])
+
+  /** 狀態變更共用：確認 → 送出 → 提示結果 */
+  function changeStatus(order: PurchaseOrder, status: Status, confirmText: string, doneText: string) {
+    if (!window.confirm(confirmText)) return
+    updateStatus({ id: order.id, status }, {
+      onSuccess: () => toast.success(doneText),
+      onError: err => toast.error(errorMessage(err)),
+    })
   }
 
-  function handleCancelOrder(order: PurchaseOrder) {
-    // 任何狀態 → CANCELLED
-    if (!window.confirm(`確定取消此採購單？此操作無法復原。`)) return
-    updateStatus({ id: order.id, status: 'CANCELLED' })
+  function handleReceive(order: PurchaseOrder) {
+    if (!window.confirm('確認收貨？系統將自動增加這張單上食材的庫存。')) return
+    receiveOrder(order, {
+      onSuccess: () => toast.success('已收貨，食材庫存已更新'),
+      onError: err => toast.error(errorMessage(err, '收貨失敗，庫存未更新，請稍後再試')),
+    })
   }
 
-  function handleReceiveOrder(order: PurchaseOrder) {
-    // ORDERED → RECEIVED：確認收貨，同時更新食材庫存
-    if (!window.confirm(`確認收貨？系統將自動更新以下食材的庫存數量。`)) return
-    receiveOrder(order)
-    // receiveOrder 會：
-    //   1. 取得每筆食材目前庫存
-    //   2. 加上採購數量
-    //   3. PATCH 每筆食材的 currentStock
-    //   4. PATCH 採購單 status = RECEIVED
-  }
+  if (isLoading) return <TableSkeleton />
 
-  // ── 載入中 ────────────────────────────────────────────────
-  if (isLoading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7480' }}>
-        載入採購資料中...
-      </div>
-    )
-  }
+  const addButton = <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setModalOpen(true)}>建立採購單</Button>
 
-  // ── 畫面渲染 ──────────────────────────────────────────────
   return (
-    <div>
-      {/* ── 頁首 ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1B2532' }}>採購進貨管理</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6B7480' }}>
+    <div className="mx-auto max-w-[1100px]">
+      <PageHeader
+        title="採購進貨管理"
+        description={
+          <>
             共 {filtered.length} 筆採購單
-            {pendingCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#B45309', fontWeight: 500 }}>
-                ⏳ {pendingCount} 筆待確認
-              </span>
-            )}
-            {orderedCount > 0 && (
-              <span style={{ marginLeft: '12px', color: '#2B5287', fontWeight: 500 }}>
-                🚚 {orderedCount} 筆待收貨
-              </span>
-            )}
-          </p>
-        </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          style={{
-            background: '#1F3F6B',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '10px 20px',
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
-        >
-          ＋ 建立採購單
-        </button>
-      </div>
+            {counts.PENDING > 0 && <span className="ml-3 font-medium text-amber-700">{counts.PENDING} 筆待確認</span>}
+            {counts.ORDERED > 0 && <span className="ml-3 font-medium text-brand-600">{counts.ORDERED} 筆待收貨</span>}
+          </>
+        }
+        action={addButton}
+      />
 
-      {/* ── 狀態篩選列 ── */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {(['ALL', 'PENDING', 'ORDERED', 'RECEIVED', 'CANCELLED'] as const).map(status => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            // as const：讓 TypeScript 推導為 literal type 而不是 string
-            style={{
-              padding: '6px 16px',
-              borderRadius: '999px',
-              fontSize: '13px',
-              border: '1px solid',
-              cursor: 'pointer',
-              borderColor: filterStatus === status ? '#1F3F6B' : '#E4E8EE',
-              background: filterStatus === status ? '#EEF3F9' : '#fff',
-              color: filterStatus === status ? '#1F3F6B' : '#6B7480',
-              fontWeight: filterStatus === status ? 600 : 400,
-              // 選中的篩選按鈕加粗+藍色，未選中灰色
-            }}
-          >
-            {status === 'ALL' ? '全部' : STATUS_CONFIG[status].label}
-            <span style={{ marginLeft: '6px', fontSize: '12px' }}>
-              {status === 'ALL'
-                ? orders.length
-                : orders.filter(o => o.status === status).length
-              }
-            </span>
-            {/* 每個狀態顯示數量，讓老闆快速掌握各狀態的單數 */}
-          </button>
-        ))}
-      </div>
+      {orders.length === 0 ? (
+        <EmptyState className="bg-white" icon={<ShoppingCart size={20} />} title="還沒有採購單"
+          description="建立採購單並確認收貨後，食材庫存會自動增加。" action={addButton} />
+      ) : (
+        <>
+          <FilterTabs
+            label="依採購單狀態篩選"
+            value={filterStatus}
+            onChange={setFilterStatus}
+            options={[
+              { value: 'ALL', label: '全部', count: counts.ALL },
+              ...STATUS_ORDER.map(s => ({ value: s, label: STATUS[s].label, count: counts[s] })),
+            ]}
+          />
 
-      {/* ── 採購單列表 ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {filtered.length === 0 ? (
-          <div style={{
-            background: '#fff',
-            borderRadius: '12px',
-            border: '1px solid #E4E8EE',
-            padding: '40px',
-            textAlign: 'center',
-            color: '#8A93A0',
-          }}>
-            沒有符合條件的採購單
+          <div className="space-y-3">
+            {filtered.length === 0 && <p className="py-10 text-center text-sm text-ink-3">沒有符合條件的採購單</p>}
+            {filtered.map(order => {
+              const supplierName = supplierMap.get(order.supplierId) ?? '未知供應商'
+              const thisReceiving = isReceiving && receivingOrder?.id === order.id
+              return (
+                <OrderCard
+                  key={order.id}
+                  title={<>
+                    <span className="text-[15px] font-semibold text-ink">{supplierName}</span>
+                    <Badge tone={STATUS[order.status].tone}>{STATUS[order.status].label}</Badge>
+                  </>}
+                  meta={<>
+                    建立 {date(order.createdAt)}
+                    {order.expectedDate && <span className="ml-3">預計到貨 {date(order.expectedDate)}</span>}
+                    {order.receivedDate && <span className="ml-3 text-emerald-700">實際收貨 {date(order.receivedDate)}</span>}
+                  </>}
+                  amount={formatCurrency(order.totalAmount)}
+                  amountHint={`${order.items.length} 項食材`}
+                  lines={order.items.map((item, idx) => {
+                    const ing = ingredientMap.get(item.ingredientId)
+                    return {
+                      key: `${item.ingredientId}-${idx}`,
+                      name: ing?.name ?? item.ingredientId,
+                      detail: `${item.quantity.toLocaleString('zh-TW')} ${ing?.unit ?? ''} × NT$ ${item.unitPrice} = ${formatCurrency(item.quantity * item.unitPrice)}`,
+                    }
+                  })}
+                  note={order.note}
+                  actions={<>
+                    {order.status === 'PENDING' && (
+                      <Button size="sm" icon={<Check size={14} aria-hidden="true" />}
+                        onClick={() => changeStatus(order, 'ORDERED', `確認向「${supplierName}」下單？`, `已向「${supplierName}」下單`)}>
+                        確認下單
+                      </Button>
+                    )}
+                    {order.status === 'ORDERED' && (
+                      <Button size="sm" icon={<PackageCheck size={14} aria-hidden="true" />} loading={thisReceiving}
+                        disabled={isReceiving} onClick={() => handleReceive(order)}
+                        className="bg-emerald-600 hover:bg-emerald-700 focus-visible:ring-emerald-100">
+                        確認收貨
+                      </Button>
+                    )}
+                    {(order.status === 'PENDING' || order.status === 'ORDERED') && (
+                      <Button size="sm" variant="danger" icon={<X size={14} aria-hidden="true" />}
+                        onClick={() => changeStatus(order, 'CANCELLED', '確定取消此採購單？此操作無法復原。', '採購單已取消')}>
+                        取消
+                      </Button>
+                    )}
+                  </>}
+                />
+              )
+            })}
           </div>
-        ) : (
-          filtered.map(order => {
-            const config = STATUS_CONFIG[order.status]
-            const supplierName = supplierMap.get(order.supplierId) ?? '未知供應商'
-            const canConfirm  = order.status === 'PENDING'
-            const canReceive  = order.status === 'ORDERED'
-            const canCancel   = order.status === 'PENDING' || order.status === 'ORDERED'
-            // 操作按鈕的顯示條件：根據目前狀態決定可執行哪些動作
-
-            return (
-              <div
-                key={order.id}
-                style={{
-                  background: '#fff',
-                  borderRadius: '12px',
-                  border: '1px solid #E4E8EE',
-                  padding: '20px',
-                }}
-              >
-                {/* 採購單標題列 */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#1B2532' }}>
-                        {supplierName}
-                      </span>
-                      {/* 狀態 Badge */}
-                      <span style={{
-                        padding: '2px 10px',
-                        borderRadius: '999px',
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        background: config.bg,
-                        color: config.color,
-                      }}>
-                        {config.label}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#8A93A0' }}>
-                      建立：{new Date(order.createdAt).toLocaleDateString('zh-TW')}
-                      {order.expectedDate && (
-                        <span style={{ marginLeft: '12px' }}>
-                          預計到貨：{new Date(order.expectedDate).toLocaleDateString('zh-TW')}
-                        </span>
-                      )}
-                      {order.receivedDate && (
-                        <span style={{ marginLeft: '12px', color: '#047857' }}>
-                          實際收貨：{new Date(order.receivedDate).toLocaleDateString('zh-TW')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {/* 總金額 */}
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#1E3A5F' }}>
-                      NT$ {order.totalAmount.toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#8A93A0' }}>
-                      {order.items.length} 項食材
-                    </div>
-                  </div>
-                </div>
-
-                {/* 明細列表 */}
-                <div style={{
-                  background: '#F5F7FA',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  marginBottom: '12px',
-                }}>
-                  {order.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: '13px',
-                        color: '#4A5565',
-                        padding: '4px 0',
-                        borderBottom: idx < order.items.length - 1 ? '1px solid #E4E8EE' : 'none',
-                      }}
-                    >
-                      <span>{ingredientMap.get(item.ingredientId) ?? item.ingredientId}</span>
-
-                      {/* 暫時顯示 ID，Week 3 優化時改成食材名稱 */}
-                      <span>
-                        {item.quantity} 單位 × NT$ {item.unitPrice} = NT$ {(item.quantity * item.unitPrice).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 備註 */}
-                {order.note && (
-                  <p style={{ fontSize: '13px', color: '#6B7480', margin: '0 0 12px' }}>
-                    備註：{order.note}
-                  </p>
-                )}
-
-                {/* 操作按鈕 */}
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  {canConfirm && (
-                    <button
-                      onClick={() => handleConfirmOrder(order)}
-                      style={actionBtnStyle('#2B5287', '#D9E4F1')}
-                    >
-                      ✓ 確認下單
-                    </button>
-                  )}
-                  {canReceive && (
-                    <button
-                      onClick={() => handleReceiveOrder(order)}
-                      disabled={isReceiving}
-                      style={actionBtnStyle('#047857', '#D1FAE5')}
-                    >
-                      {isReceiving ? '處理中...' : '📦 確認收貨'}
-                    </button>
-                  )}
-                  {canCancel && (
-                    <button
-                      onClick={() => handleCancelOrder(order)}
-                      style={actionBtnStyle('#E11D48', '#FFE4E6')}
-                    >
-                      ✕ 取消
-                    </button>
-                  )}
-                </div>
-              </div>
-            )
-          })
-        )}
-      </div>
-
-      {/* ── Modal ── */}
-      {modalOpen && (
-        <PurchaseFormModal onClose={() => setModalOpen(false)} />
-        // 採購單只有新增模式，不支援編輯（需取消後重建）
-        // 所以不需要傳 order prop
+        </>
       )}
+
+      {modalOpen && <PurchaseFormModal onClose={() => setModalOpen(false)} />}
     </div>
   )
-}
-
-// ── 共用樣式函式 ──────────────────────────────────────────────
-function actionBtnStyle(color: string, bg: string): React.CSSProperties {
-  return {
-    padding: '6px 16px',
-    fontSize: '13px',
-    border: `1px solid ${color}`,
-    borderRadius: '8px',
-    background: bg,
-    color: color,
-    cursor: 'pointer',
-    fontWeight: 500,
-  }
 }
 
 export default PurchasePage
