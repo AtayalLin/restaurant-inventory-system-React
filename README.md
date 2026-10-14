@@ -27,7 +27,7 @@
 | 資料狀態管理 | TanStack Query v5 |
 | 樣式 | Tailwind CSS v4 |
 | 後端 | [Spring Boot 3.5 + MySQL API](https://github.com/AtayalLin/restaurant-inventory-system-api)（另一個 repo）；開發期也可用 json-server，線上 Demo 用 MSW |
-| 測試 | Vitest＋MSW（在 Node 以模擬後端跑整合測試） |
+| 測試 | Vitest＋MSW（單元／整合）、Playwright（端對端） |
 | CI/CD | GitHub Actions（lint、測試、型別檢查、建置、自動部署 GitHub Pages） |
 | AI 自動化 | n8n（Docker 自架）+ NVIDIA NIM |
 | 圖表 | Recharts |
@@ -114,13 +114,14 @@ npm run build:demo   # 建置 Demo 版到 dist/
 
 **部署**：push 到 `main` 後，`.github/workflows/deploy-demo.yml` 會自動建置並部署。第一次使用前，到 repo 的 Settings → Pages → Build and deployment → Source 選「GitHub Actions」。
 
-**CI**：每次 push 與 Pull Request，`.github/workflows/ci.yml` 會跑 ESLint、測試、TypeScript 型別檢查、一般版與 Demo 版建置。
+**CI**：每次 push 與 Pull Request，`.github/workflows/ci.yml` 會跑 ESLint、單元測試、TypeScript 型別檢查、一般版與 Demo 版建置，以及 Playwright 端對端測試。
 
 ### 🧪 測試
 
 ```bash
-npm test          # 執行全部測試
+npm test            # 單元／整合測試（Vitest）
 npm run test:watch  # 開發時監看模式
+npm run test:e2e    # 端對端測試（Playwright，會自動建置並啟動 Demo 版）
 ```
 
 測試直接沿用 Demo 的 MSW 模擬後端（`src/test/setup.ts`），不需要啟動 json-server，涵蓋：
@@ -135,6 +136,14 @@ npm run test:watch  # 開發時監看模式
 - **查詢助理**：意圖判斷、排行榜排序、補貨建議數量
 
 測試固定「現在時間」，結果不會隨日期改變。
+
+**端對端測試（`e2e/`）**：用 Playwright 開真的瀏覽器操作 Demo 版，驗證使用者實際會走的流程：
+
+- 未登入導向登入頁、錯誤密碼提示、員工看不到也進不去採購頁、總部切換門市與登出
+- 店長點餐 → 備餐 → 出餐，確認牛腱肉庫存依配方減少 200g；折扣超過應付金額無法建立
+- 總部從明日預估一鍵叫貨、低於最低訂購量被擋下、建立成功、開啟列印版面
+
+CI 另外跑一個 `e2e` 工作；失敗時會上傳含截圖與操作紀錄的報告。
 
 ---
 
@@ -227,7 +236,8 @@ npm run test:watch  # 開發時監看模式
 │   ├── 共用 UI 元件與設計 token ✅
 │   ├── GitHub Actions CI（lint、型別檢查、建置）✅
 │   ├── 線上 Demo（MSW + GitHub Pages）✅
-│   └── Vitest 單元／整合測試（已加入 CI）✅
+│   ├── Vitest 單元／整合測試（已加入 CI）✅
+│   └── Playwright 端對端測試（已加入 CI）✅
 │
 └── 對標業界的下一階段（依序進行）
     ├── ① Vitest 單元測試並加入 CI ✅

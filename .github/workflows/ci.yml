@@ -34,3 +34,25 @@ jobs:
 
       - name: 建置 Demo 版
         run: npm run build:demo
+
+  # 端對端測試：用真的瀏覽器跑登入、點餐出餐、叫貨等完整流程（對象是 Demo 版，不需要後端）
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 安裝 Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Playwright E2E
+        run: npm run test:e2e
+      # 失敗時上傳報告（含每一步的截圖與操作紀錄），在 Actions 頁面下載查看
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

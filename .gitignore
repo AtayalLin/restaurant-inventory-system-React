@@ -32,3 +32,7 @@ payload.json
 
 # n8n 匯出的 workflow 可能含有 API 金鑰，提交前務必先移除金鑰並改用 n8n Credentials
 *workflow*.json
+
+# Playwright 測試產物
+test-results/
+playwright-report/
