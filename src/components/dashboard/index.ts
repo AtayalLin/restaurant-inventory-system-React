@@ -1,5 +1,5 @@
 export { StatCard } from './StatCard'
-export { RevenueTrendCard } from './RevenueTrendCard'
+// RevenueTrendCard 不從這裡匯出：它用到體積較大的 Recharts，由 Dashboard 延遲載入
 export { QueryAssistantCard } from './QueryAssistantCard'
 export { LowStockCard } from './LowStockCard'
 export { ExpiryCard } from './ExpiryCard'

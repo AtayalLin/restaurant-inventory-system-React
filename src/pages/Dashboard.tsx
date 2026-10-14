@@ -12,11 +12,16 @@ import { useStores } from '../hooks/useStores'
 import { useSession } from '../session/SessionProvider'
 import { ALL_STORES } from '../lib/permissions'
 import { formatCurrency, formatTime } from '../lib/format'
-import { EmptyState, Button } from '../components/ui'
+import { lazy, Suspense } from 'react'
+import { EmptyState, Button, Card, Skeleton } from '../components/ui'
 import {
-  StatCard, RevenueTrendCard, QueryAssistantCard,
+  StatCard, QueryAssistantCard,
   LowStockCard, ExpiryCard, ForecastCard, StoreCompareCard, MarginTable, DashboardSkeleton,
 } from '../components/dashboard'
+
+// 營收趨勢圖用到 Recharts（約占儀表板程式的一半），延遲載入：統計卡先顯示，圖表隨後補上
+const RevenueTrendCard = lazy(() =>
+  import('../components/dashboard/RevenueTrendCard').then(m => ({ default: m.RevenueTrendCard })))
 
 function Dashboard() {
   const { storeId, can } = useSession()
@@ -107,7 +112,11 @@ function Dashboard() {
 
       {/* 趨勢圖＋AI 查詢 */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <div className="xl:col-span-3"><RevenueTrendCard data={dailyTrend} /></div>
+        <div className="xl:col-span-3">
+          <Suspense fallback={<Card className="h-full p-5"><Skeleton className="h-full min-h-72 w-full" /></Card>}>
+            <RevenueTrendCard data={dailyTrend} />
+          </Suspense>
+        </div>
         <div className="xl:col-span-2"><QueryAssistantCard /></div>
       </div>
 

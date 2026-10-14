@@ -1,13 +1,18 @@
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import DemoBanner from './DemoBanner'
 import ErrorBoundary from '../ErrorBoundary'
+import { TableSkeleton } from '../ui'
+import { preloadPages } from '../../routes/pages'
 
 function Layout() {
   // 手機版側欄開關；桌機版側欄永遠顯示，這個狀態不影響桌機
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // 登入後空閒時預先下載其他頁面，切換時不必等待
+  useEffect(() => { preloadPages() }, [])
 
   return (
     <div className="flex min-h-screen bg-canvas print:bg-white">{/* print:* ：列印採購單時只印內容區 */}
@@ -19,7 +24,10 @@ function Layout() {
         <main className="flex-1 p-4 md:p-6 print:p-0">
           {/* 單一頁面出錯時只影響內容區，側欄與標題列仍可操作 */}
           <ErrorBoundary>
-            <Outlet />
+            {/* 頁面程式碼下載中先顯示骨架，側欄與標題列保持可操作 */}
+            <Suspense fallback={<TableSkeleton />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>

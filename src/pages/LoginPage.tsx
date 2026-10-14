@@ -64,7 +64,7 @@ function LoginPage() {
 
         {/* 示範帳號：讓面試官一鍵體驗三種角色 */}
         <div className="mt-5">
-          <p className="mb-2 text-center text-xs text-ink-3">示範帳號（密碼皆為 {DEMO_PASSWORD}），點一下直接登入</p>
+          <p className="mb-2 text-center text-xs text-ink-2">示範帳號（密碼皆為 {DEMO_PASSWORD}），點一下直接登入</p>
           <div className="grid grid-cols-3 gap-2">
             {DEMO_USERS.map(u => (
               <button

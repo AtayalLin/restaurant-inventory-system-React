@@ -30,7 +30,7 @@
   --color-canvas: #F5F7FA;
   --color-ink:    #1B2532;
   --color-ink-2:  #4A5565;
-  --color-ink-3:  #6B7480;  /* 次要文字，對白底對比 4.8:1 */
+  --color-ink-3:  #5E6672;  /* 次要文字：白底 5.7:1、頁面灰底 5.3:1，皆符合 WCAG AA（≥4.5:1） */
   --color-line:   #E4E8EE;
 
   --radius-card: 0.875rem;
