@@ -3,6 +3,7 @@ import { useProducts } from './useProducts'
 import { useIngredients } from './useIngredients'
 import { useSalesOrders } from './useSalesOrders'
 import { forecastTomorrow } from '../lib/forecast'
+import { ALL_STORES, filterByStore } from '../lib/permissions'
 // 重用三個現有 hook 拿到的 queryKey 結構一致，這裡額外疊加 refetchInterval
 // 為什麼不直接改 useProducts.ts 等共用 hook：
 //   InventoryPage、ProductsPage 等其他頁面也在用同一批 hook
@@ -80,7 +81,8 @@ const EXPIRY_WARNING_DAYS = 7
 // 主 Hook
 // ==========================================
 
-export function useDashboard() {
+/** @param storeId 目前查看的門市；ALL_STORES 表示全部門市 */
+export function useDashboard(storeId: string = ALL_STORES) {
 
   // ── 自動更新設定 ──────────────────────────────────────────
   // refetchInterval：每 30 秒自動重新抓取一次，數字變動會自動反映
@@ -108,7 +110,7 @@ export function useDashboard() {
   } = useIngredients(autoRefreshOptions)
 
   const {
-    data: salesOrders = [],
+    data: allSalesOrders = [],
     isLoading: salesLoading,
     isError: salesError,
     dataUpdatedAt: salesUpdatedAt,
@@ -118,6 +120,9 @@ export function useDashboard() {
   const updatedAt = Math.max(productsUpdatedAt, ingredientsUpdatedAt, salesUpdatedAt)
 
   const isLoading = productsLoading || ingredientsLoading || salesLoading
+
+  // 營收、趨勢等統計只算目前門市的訂單
+  const salesOrders = useMemo(() => filterByStore(allSalesOrders, storeId), [allSalesOrders, storeId])
 
   // 【本次修正】原本完全沒有暴露 isError：
   //   如果任一個 API 呼叫失敗，data 會 fallback 成空陣列 []，
@@ -266,9 +271,10 @@ export function useDashboard() {
   }, [salesOrders])
 
   // 明日需求預測與叫貨建議（計算邏輯在 src/lib/forecast.ts，有單元測試）
+  // 食材由中央廚房統一庫存，所以用「全部門市」的銷售來預測用量
   const forecast = useMemo(
-    () => forecastTomorrow(salesOrders, products, ingredients),
-    [salesOrders, products, ingredients],
+    () => forecastTomorrow(allSalesOrders, products, ingredients),
+    [allSalesOrders, products, ingredients],
   )
 
   return {
@@ -280,6 +286,7 @@ export function useDashboard() {
     revenueStats,
     dailyTrend,
     forecast,
+    allSalesOrders, // 跨店比較用
     updatedAt,
   }
 }

@@ -9,6 +9,7 @@ import {
   Badge, Button, EmptyState, FilterTabs, OrderCard, PageHeader, TableSkeleton,
   useToast, errorMessage, type Tone,
 } from '../../components/ui'
+import { useSession } from '../../session/SessionProvider'
 import { formatCurrency } from '../../lib/format'
 import type { PurchaseOrder } from '../../types'
 
@@ -26,6 +27,8 @@ function PurchasePage() {
   const [filterStatus, setFilterStatus] = useState<Status | 'ALL'>('ALL')
   const [modalOpen, setModalOpen] = useState(false)
   const toast = useToast()
+  // 採購由總部（中央廚房）統一進貨；店長可查看進度但不能操作
+  const canEdit = useSession().can('purchase:edit')
 
   const { data: orders = [], isLoading } = usePurchaseOrders()
   const { data: suppliers = [] } = useSuppliers()
@@ -70,7 +73,7 @@ function PurchasePage() {
 
   if (isLoading) return <TableSkeleton />
 
-  const addButton = <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setModalOpen(true)}>建立採購單</Button>
+  const addButton = canEdit && <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setModalOpen(true)}>建立採購單</Button>
 
   return (
     <div className="mx-auto max-w-[1100px]">
@@ -129,7 +132,7 @@ function PurchasePage() {
                     }
                   })}
                   note={order.note}
-                  actions={<>
+                  actions={canEdit && <>
                     {order.status === 'PENDING' && (
                       <Button size="sm" icon={<Check size={14} aria-hidden="true" />}
                         onClick={() => changeStatus(order, 'ORDERED', `確認向「${supplierName}」下單？`, `已向「${supplierName}」下單`)}>

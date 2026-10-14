@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom'
-import { Bell, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
+import UserMenu from './UserMenu'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': '儀表板',
@@ -34,12 +35,9 @@ function Header({ menuOpen, onMenuClick }: HeaderProps) {
         >
           <Menu size={22} />
         </button>
-        <h1 className="m-0 text-lg font-semibold text-[#1E3A5F]">{title}</h1>
+        <h1 className="m-0 hidden text-lg font-semibold text-brand-800 sm:block">{title}</h1>
       </div>
-      <div className="flex items-center gap-4">
-        <Bell size={20} className="text-gray-500" aria-label="通知" />
-        <span className="text-sm text-gray-500">老闆</span>
-      </div>
+      <UserMenu />
     </header>
   )
 }

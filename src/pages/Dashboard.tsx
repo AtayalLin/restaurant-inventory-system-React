@@ -8,14 +8,19 @@
 // 這個檔案只負責：取得資料、處理載入／錯誤狀態、決定版面配置。
 import { DollarSign, CalendarDays, CalendarRange, Users, RefreshCw, ServerCrash } from 'lucide-react'
 import { useDashboard } from '../hooks/useDashboard'
+import { useStores } from '../hooks/useStores'
+import { useSession } from '../session/SessionProvider'
+import { ALL_STORES } from '../lib/permissions'
 import { formatCurrency, formatTime } from '../lib/format'
 import { EmptyState, Button } from '../components/ui'
 import {
   StatCard, RevenueTrendCard, QueryAssistantCard,
-  LowStockCard, ExpiryCard, ForecastCard, MarginTable, DashboardSkeleton,
+  LowStockCard, ExpiryCard, ForecastCard, StoreCompareCard, MarginTable, DashboardSkeleton,
 } from '../components/dashboard'
 
 function Dashboard() {
+  const { storeId, can } = useSession()
+  const { data: stores = [] } = useStores()
   const {
     isLoading,
     isError,
@@ -25,8 +30,10 @@ function Dashboard() {
     revenueStats,
     dailyTrend,
     forecast,
+    allSalesOrders,
     updatedAt,
-  } = useDashboard()
+  } = useDashboard(storeId)
+  const storeName = storeId === ALL_STORES ? '全部門市' : stores.find(s => s.id === storeId)?.name ?? ''
 
   if (isLoading) return <DashboardSkeleton />
 
@@ -54,7 +61,7 @@ function Dashboard() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink">營運總覽</h2>
-          <p className="mt-1 text-sm text-ink-3">今天的營收、庫存與商品表現</p>
+          <p className="mt-1 text-sm text-ink-3">{storeName && `${storeName}・`}今天的營收、庫存與商品表現</p>
         </div>
         <p className="flex items-center gap-1.5 text-xs text-ink-3">
           <span className="relative flex size-2">
@@ -92,6 +99,11 @@ function Dashboard() {
           hint={`累計 ${revenueStats.orderCount} 筆完成訂單・今日 ${revenueStats.todayOrderCount} 筆`}
         />
       </div>
+
+      {/* 跨店比較：只有總部在「全部門市」模式下顯示 */}
+      {can('report:crossStore') && storeId === ALL_STORES && stores.length > 1 && (
+        <StoreCompareCard orders={allSalesOrders} stores={stores} />
+      )}
 
       {/* 趨勢圖＋AI 查詢 */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">

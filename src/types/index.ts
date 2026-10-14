@@ -152,6 +152,8 @@ export interface SalesOrder {
   note: string
   createdAt: string
   testBatchId: string | null // 【新增】併發測試批號，非測試資料為 null
+  /** 所屬門市；舊資料沒有這個欄位時視為預設門市（見 lib/permissions.ts 的 DEFAULT_STORE_ID） */
+  storeId?: ID
 }
 
 // ============================================================
@@ -172,4 +174,12 @@ export interface User {
   id: ID
   name: string
   role: UserRole
+  /** 所屬門市；總部（OWNER）為 null，可切換查看所有門市 */
+  storeId: ID | null
+}
+
+export interface Store {
+  id: ID
+  name: string
+  address: string
 }

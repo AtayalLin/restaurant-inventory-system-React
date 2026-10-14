@@ -10,6 +10,7 @@ import SalesPage from './pages/sales/SalesPage'
 import SettingsPage from './pages/SettingsPage'
 import ConcurrencyTestPage from './pages/testing/ConcurrencyTestPage'
 import NotFoundPage from './pages/NotFoundPage'
+import RequirePermission from './components/RequirePermission'
 // 【修正 Bug 4】補上匯入，否則畫面已經寫好但路由沒接，使用者永遠進不去
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products"  element={<ProductsPage />} />
           <Route path="inventory" element={<InventoryPage />} />
-          <Route path="purchase"  element={<PurchasePage />} />
+          <Route path="purchase"  element={<RequirePermission permission="purchase:view"><PurchasePage /></RequirePermission>} />
           <Route path="sales"     element={<SalesPage />} />
           <Route path="settings"  element={<SettingsPage />} />
           <Route path="testing"   element={<ConcurrencyTestPage />} />

@@ -9,6 +9,9 @@ import {
   Badge, Button, EmptyState, FilterTabs, OrderCard, PageHeader, TableSkeleton,
   useToast, errorMessage, type Tone,
 } from '../../components/ui'
+import { useSession } from '../../session/SessionProvider'
+import { useStores } from '../../hooks/useStores'
+import { ALL_STORES, filterByStore, storeOf } from '../../lib/permissions'
 import { formatCurrency } from '../../lib/format'
 import type { SalesOrder } from '../../types'
 
@@ -29,7 +32,13 @@ function SalesPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const toast = useToast()
 
-  const { data: orders = [], isLoading } = useSalesOrders()
+  const { storeId, can } = useSession()
+  const { data: stores = [] } = useStores()
+  const { data: allOrders = [], isLoading } = useSalesOrders()
+  // 只顯示目前門市的訂單；總部選「全部門市」時看全部
+  const orders = useMemo(() => filterByStore(allOrders, storeId), [allOrders, storeId])
+  const isAllStores = storeId === ALL_STORES
+  const storeName = useMemo(() => new Map(stores.map(s => [s.id, s.name])), [stores])
   const { data: products = [] } = useProducts()
   const { mutate: updateStatus } = useUpdateSalesStatus()
   // variables：正在出餐的那筆訂單，只讓它的按鈕顯示 loading
@@ -81,7 +90,13 @@ function SalesPage() {
 
   if (isLoading) return <TableSkeleton />
 
-  const addButton = <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setModalOpen(true)}>新增訂單</Button>
+  // 訂單一定屬於某間門市：總部在「全部門市」模式下要先選門市才能點餐
+  const addButton = (
+    <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setModalOpen(true)} disabled={isAllStores}
+      title={isAllStores ? '請先在右上角選擇門市' : undefined}>
+      新增訂單
+    </Button>
+  )
 
   return (
     <div className="mx-auto max-w-[1100px]">
@@ -121,6 +136,7 @@ function SalesPage() {
                 <OrderCard
                   key={order.id}
                   title={<>
+                    {isAllStores && <span className="text-[13px] font-semibold text-ink">{storeName.get(storeOf(order)) ?? '—'}</span>}
                     <span className="text-[13px] font-medium text-ink-2">{CHANNEL_LABEL[order.channel]}</span>
                     <Badge tone={STATUS[order.status].tone}>{STATUS[order.status].label}</Badge>
                   </>}
@@ -152,7 +168,7 @@ function SalesPage() {
                         出餐完成
                       </Button>
                     )}
-                    {order.status === 'COMPLETED' && (
+                    {order.status === 'COMPLETED' && can('sales:refund') && (
                       <Button size="sm" variant="secondary" icon={<RotateCcw size={14} aria-hidden="true" />} onClick={() => handleRefund(order)}>
                         退款
                       </Button>
@@ -172,7 +188,7 @@ function SalesPage() {
         </>
       )}
 
-      {modalOpen && <SalesFormModal onClose={() => setModalOpen(false)} />}
+      {modalOpen && !isAllStores && <SalesFormModal storeId={storeId} onClose={() => setModalOpen(false)} />}
     </div>
   )
 }

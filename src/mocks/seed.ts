@@ -12,10 +12,11 @@
  */
 import type {
   Product, ProductCategory, Ingredient, Supplier,
-  PurchaseOrder, SalesOrder, SalesChannel, StockLog, TestRun, SystemSettings,
+  PurchaseOrder, SalesOrder, SalesChannel, StockLog, TestRun, SystemSettings, Store,
 } from '../types'
 
 export interface DemoDB {
+  stores: Store[]
   products: Product[]
   productCategories: ProductCategory[]
   ingredients: Ingredient[]
@@ -39,6 +40,12 @@ function mulberry32(seed: number) {
 }
 
 const CREATED = '2026-06-01T08:00:00.000Z'
+
+// 兩間高雄門市：左營店客人較多（約 6 成訂單），跨店比較才看得出差異
+const stores: Store[] = [
+  { id: 'st1', name: '左營店', address: '高雄市左營區博愛二路 100 號' },
+  { id: 'st2', name: '鳳山店', address: '高雄市鳳山區光遠路 200 號' },
+]
 
 const productCategories: ProductCategory[] = [
   { id: 'cat001', name: '主食' },
@@ -178,6 +185,7 @@ function generateSalesOrders(now: Date, rand: () => number): SalesOrder[] {
         note: NOTES[Math.floor(rand() * NOTES.length)],
         createdAt: created.toISOString(),
         testBatchId: null,
+        storeId: rand() < 0.6 ? 'st1' : 'st2',
       })
     }
   }
@@ -223,6 +231,7 @@ export function createSeed(now = new Date()): DemoDB {
   const rand = mulberry32(daySeed)
 
   return {
+    stores: structuredClone(stores),
     products: structuredClone(products),
     productCategories: structuredClone(productCategories),
     ingredients: structuredClone(ingredients),

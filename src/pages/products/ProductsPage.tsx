@@ -9,6 +9,7 @@ import {
   Badge, Button, DataTable, EmptyRow, EmptyState, PageHeader, TableSkeleton,
   inputClass, useToast, errorMessage,
 } from '../../components/ui'
+import { useSession } from '../../session/SessionProvider'
 import { formatCurrency } from '../../lib/format'
 import type { Product } from '../../types'
 
@@ -28,6 +29,8 @@ function ProductsPage() {
   const { data: categories = [] } = useProductCategories()
   const { mutate: deleteProduct } = useDeleteProduct()
   const toast = useToast()
+  // 沒有編輯權限時隱藏新增、編輯、刪除（菜單由總部統一管理）
+  const canEdit = useSession().can('product:edit')
 
   // 分類 id → 名稱的查找表，表格每列都要用，先建好避免重複 find
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories])
@@ -48,13 +51,13 @@ function ProductsPage() {
 
   if (isLoading) return <TableSkeleton />
 
-  const addButton = (
+  const addButton = canEdit ? (
     <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setEditing(null)}>新增商品</Button>
-  )
+  ) : null
 
   return (
     <div className="mx-auto max-w-[1400px]">
-      <PageHeader title="商品列表" description={`共 ${filtered.length} 筆商品`} action={addButton} />
+      <PageHeader title="商品列表" description={`共 ${filtered.length} 筆商品${canEdit ? '' : '・菜單由總部統一管理'}`} action={addButton} />
 
       {products.length === 0 ? (
         // 完全沒有商品：引導建立第一筆，而不是顯示空表格
@@ -89,9 +92,9 @@ function ProductsPage() {
             </label>
           </div>
 
-          <DataTable headers={['商品名稱', '分類', '售價', '稅別', '狀態', '操作']}>
+          <DataTable headers={['商品名稱', '分類', '售價', '稅別', '狀態', ...(canEdit ? ['操作'] : [])]}>
             {filtered.length === 0 ? (
-              <EmptyRow colSpan={6}>沒有符合條件的商品</EmptyRow>
+              <EmptyRow colSpan={canEdit ? 6 : 5}>沒有符合條件的商品</EmptyRow>
             ) : (
               filtered.map(product => (
                 <tr key={product.id} className="hover:bg-canvas/60">
@@ -102,18 +105,20 @@ function ProductsPage() {
                   <td className="px-4 py-3.5">
                     <Badge tone={product.isActive ? 'success' : 'neutral'}>{product.isActive ? '販售中' : '已下架'}</Badge>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex gap-2">
-                      <Button variant="secondary" size="sm" icon={<Pencil size={13} aria-hidden="true" />}
-                        onClick={() => setEditing(product)} aria-label={`編輯 ${product.name}`}>
-                        編輯
-                      </Button>
-                      <Button variant="danger" size="sm" icon={<Trash2 size={13} aria-hidden="true" />}
-                        onClick={() => handleDelete(product)} aria-label={`刪除 ${product.name}`}>
-                        刪除
-                      </Button>
-                    </div>
-                  </td>
+                  {canEdit && (
+                    <td className="px-4 py-3.5">
+                      <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" icon={<Pencil size={13} aria-hidden="true" />}
+                          onClick={() => setEditing(product)} aria-label={`編輯 ${product.name}`}>
+                          編輯
+                        </Button>
+                        <Button variant="danger" size="sm" icon={<Trash2 size={13} aria-hidden="true" />}
+                          onClick={() => handleDelete(product)} aria-label={`刪除 ${product.name}`}>
+                          刪除
+                        </Button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

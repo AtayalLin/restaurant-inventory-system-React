@@ -8,6 +8,7 @@ import {
   Badge, Button, DataTable, EmptyRow, EmptyState, PageHeader, TableSkeleton,
   inputClass, useToast, errorMessage, type Tone,
 } from '../../components/ui'
+import { useSession } from '../../session/SessionProvider'
 import type { Ingredient } from '../../types'
 
 type StatusFilter = 'all' | 'low' | 'normal'
@@ -40,6 +41,8 @@ function InventoryPage() {
   const { data: suppliers = [] } = useSuppliers()
   const { mutate: deleteIngredient } = useDeleteIngredient()
   const toast = useToast()
+  // 沒有編輯權限時隱藏新增、編輯、刪除（員工唯讀）
+  const canEdit = useSession().can('inventory:edit')
 
   const supplierMap = useMemo(() => new Map(suppliers.map(s => [s.id, s.name])), [suppliers])
 
@@ -68,9 +71,9 @@ function InventoryPage() {
 
   if (isLoading) return <TableSkeleton />
 
-  const addButton = (
+  const addButton = canEdit ? (
     <Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => setEditing(null)}>新增食材</Button>
-  )
+  ) : null
 
   return (
     <div className="mx-auto max-w-[1400px]">
@@ -124,9 +127,9 @@ function InventoryPage() {
             </label>
           </div>
 
-          <DataTable minWidth={880} headers={['食材名稱', '分類', '現有庫存', '安全庫存', '供應商', '效期', '庫存狀態', '操作']}>
+          <DataTable minWidth={880} headers={['食材名稱', '分類', '現有庫存', '安全庫存', '供應商', '效期', '庫存狀態', ...(canEdit ? ['操作'] : [])]}>
             {filtered.length === 0 ? (
-              <EmptyRow colSpan={8}>沒有符合條件的食材</EmptyRow>
+              <EmptyRow colSpan={canEdit ? 8 : 7}>沒有符合條件的食材</EmptyRow>
             ) : (
               filtered.map(ing => {
                 const status = getStockStatus(ing)
@@ -150,14 +153,16 @@ function InventoryPage() {
                           </span>}
                     </td>
                     <td className="px-4 py-3.5"><Badge tone={status.tone}>{status.label}</Badge></td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex gap-2">
-                        <Button variant="secondary" size="sm" icon={<Pencil size={13} aria-hidden="true" />}
-                          onClick={() => setEditing(ing)} aria-label={`編輯 ${ing.name}`}>編輯</Button>
-                        <Button variant="danger" size="sm" icon={<Trash2 size={13} aria-hidden="true" />}
-                          onClick={() => handleDelete(ing)} aria-label={`刪除 ${ing.name}`}>刪除</Button>
-                      </div>
-                    </td>
+                    {canEdit && (
+                      <td className="px-4 py-3.5">
+                        <div className="flex gap-2">
+                          <Button variant="secondary" size="sm" icon={<Pencil size={13} aria-hidden="true" />}
+                            onClick={() => setEditing(ing)} aria-label={`編輯 ${ing.name}`}>編輯</Button>
+                          <Button variant="danger" size="sm" icon={<Trash2 size={13} aria-hidden="true" />}
+                            onClick={() => handleDelete(ing)} aria-label={`刪除 ${ing.name}`}>刪除</Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 )
               })

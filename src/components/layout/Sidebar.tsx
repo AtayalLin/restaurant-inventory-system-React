@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom'
+import { useSession } from '../../session/SessionProvider'
+import type { Permission } from '../../lib/permissions'
 import {
   LayoutDashboard, UtensilsCrossed, Package, ShoppingCart, Receipt,
   FlaskConical, Settings, X, type LucideIcon,
@@ -9,13 +11,15 @@ interface NavItem {
   label: string
   icon: LucideIcon
   devOnly?: boolean
+  /** 需要的權限；沒有權限的角色看不到這個選項 */
+  permission?: Permission
 }
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: '儀表板',   icon: LayoutDashboard },
   { to: '/products',  label: '菜單商品', icon: UtensilsCrossed },
   { to: '/inventory', label: '食材庫存', icon: Package },
-  { to: '/purchase',  label: '採購進貨', icon: ShoppingCart },
+  { to: '/purchase',  label: '採購進貨', icon: ShoppingCart, permission: 'purchase:view' },
   { to: '/sales',     label: '銷售管理', icon: Receipt },
   // 以下兩項只在開發模式（npm run dev）顯示：
   //   併發測試是驗證樂觀鎖的開發工具，系統設定尚未完成，
@@ -34,6 +38,8 @@ interface SidebarProps {
 }
 
 function Sidebar({ open, onClose }: SidebarProps) {
+  const { can } = useSession()
+  const navItems = visibleItems.filter(item => !item.permission || can(item.permission))
   return (
     <>
       {/* 手機版遮罩：側欄展開時覆蓋內容，點擊即關閉 */}
@@ -71,7 +77,7 @@ function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 py-4" aria-label="主要功能">
-          {visibleItems.map(({ to, label, icon: Icon, devOnly }) => (
+          {navItems.map(({ to, label, icon: Icon, devOnly }) => (
             <NavLink
               key={to}
               to={to}

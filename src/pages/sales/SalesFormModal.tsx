@@ -36,7 +36,8 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
 ]
 const EMPTY_ITEM = { productId: '', quantity: 1, unitPrice: 0 }
 
-function SalesFormModal({ onClose }: { onClose: () => void }) {
+/** storeId：訂單所屬門市，由銷售頁傳入目前選擇的門市 */
+function SalesFormModal({ storeId, onClose }: { storeId: string; onClose: () => void }) {
   const toast = useToast()
   const { data: products = [] } = useProducts()
   const activeProducts = products.filter(p => p.isActive) // 已下架的商品不能點
@@ -63,7 +64,7 @@ function SalesFormModal({ onClose }: { onClose: () => void }) {
 
   function onSubmit(data: SalesFormData) {
     createOrder(
-      { status: 'PENDING', items: data.items, subtotal, taxAmount, discount: data.discount, total, channel: data.channel, note: data.note, testBatchId: null },
+      { status: 'PENDING', items: data.items, subtotal, taxAmount, discount: data.discount, total, channel: data.channel, note: data.note, testBatchId: null, storeId },
       {
         onSuccess: () => { toast.success(`訂單已建立，金額 ${formatCurrency(total)}`); onClose() },
         onError: err => toast.error(errorMessage(err, '建立失敗，請稍後再試')),

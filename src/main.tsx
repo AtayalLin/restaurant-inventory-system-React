@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App.tsx'
 import { ToastProvider } from './components/ui'
+import { SessionProvider } from './session/SessionProvider'
 
 const queryClient = new QueryClient()
 
@@ -22,7 +23,10 @@ async function bootstrap() {
       <QueryClientProvider client={queryClient}>
         {/* ToastProvider：讓所有頁面都能顯示操作結果提示 */}
         <ToastProvider>
-          <App />
+          {/* SessionProvider：目前登入身分與門市，決定各頁面可用的功能 */}
+          <SessionProvider>
+            <App />
+          </SessionProvider>
         </ToastProvider>
       </QueryClientProvider>
     </StrictMode>,
