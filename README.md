@@ -26,7 +26,7 @@
 | 前端框架 | React 19 + TypeScript + Vite |
 | 資料狀態管理 | TanStack Query v5 |
 | 樣式 | Tailwind CSS v4 |
-| Mock 後端 | json-server（本機）、MSW（線上 Demo） |
+| 後端 | [Spring Boot 3.5 + MySQL API](https://github.com/AtayalLin/restaurant-inventory-system-api)（另一個 repo）；開發期也可用 json-server，線上 Demo 用 MSW |
 | 測試 | Vitest＋MSW（在 Node 以模擬後端跑整合測試） |
 | CI/CD | GitHub Actions（lint、測試、型別檢查、建置、自動部署 GitHub Pages） |
 | AI 自動化 | n8n（Docker 自架）+ NVIDIA NIM |
@@ -215,7 +215,7 @@ npm run test:watch  # 開發時監看模式
     │   （近 4 週同星期平均銷量 → 依配方換算食材用量 → AI 只負責解釋）
     ├── ③ 多門市切換＋角色權限（總部／店長／員工）✅
     ├── ④ 叫貨規則：最低訂購量、供應商叫貨日、缺貨阻擋、列印採購單 🔲
-    └── ⑤ Spring Boot + MySQL 後端、JWT 權限 🔲
+    └── ⑤ Spring Boot + MySQL 後端 🔄（CRUD、交易式扣庫存、樂觀鎖已完成；JWT 待做）
 ```
 
 ### 業界需求對照（2026/10 調查）
