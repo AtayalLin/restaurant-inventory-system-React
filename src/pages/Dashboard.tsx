@@ -12,7 +12,7 @@ import { formatCurrency, formatTime } from '../lib/format'
 import { EmptyState, Button } from '../components/ui'
 import {
   StatCard, RevenueTrendCard, QueryAssistantCard,
-  LowStockCard, ExpiryCard, MarginTable, DashboardSkeleton,
+  LowStockCard, ExpiryCard, ForecastCard, MarginTable, DashboardSkeleton,
 } from '../components/dashboard'
 
 function Dashboard() {
@@ -24,6 +24,7 @@ function Dashboard() {
     productMargins,
     revenueStats,
     dailyTrend,
+    forecast,
     updatedAt,
   } = useDashboard()
 
@@ -98,8 +99,9 @@ function Dashboard() {
         <div className="xl:col-span-2"><QueryAssistantCard /></div>
       </div>
 
-      {/* 庫存相關 */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* 庫存相關：明日預估 → 目前低庫存 → 即期食材 */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="lg:col-span-2 xl:col-span-1"><ForecastCard forecast={forecast} /></div>
         <LowStockCard items={lowStockItems} />
         <ExpiryCard items={expiryWarnings} />
       </div>

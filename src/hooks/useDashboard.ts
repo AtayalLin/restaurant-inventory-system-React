@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useProducts } from './useProducts'
 import { useIngredients } from './useIngredients'
 import { useSalesOrders } from './useSalesOrders'
+import { forecastTomorrow } from '../lib/forecast'
 // 重用三個現有 hook 拿到的 queryKey 結構一致，這裡額外疊加 refetchInterval
 // 為什麼不直接改 useProducts.ts 等共用 hook：
 //   InventoryPage、ProductsPage 等其他頁面也在用同一批 hook
@@ -264,6 +265,12 @@ export function useDashboard() {
     return days
   }, [salesOrders])
 
+  // 明日需求預測與叫貨建議（計算邏輯在 src/lib/forecast.ts，有單元測試）
+  const forecast = useMemo(
+    () => forecastTomorrow(salesOrders, products, ingredients),
+    [salesOrders, products, ingredients],
+  )
+
   return {
     isLoading,
     isError, // 新增：暴露給 Dashboard.tsx 判斷要不要顯示錯誤狀態
@@ -272,6 +279,7 @@ export function useDashboard() {
     productMargins,
     revenueStats,
     dailyTrend,
+    forecast,
     updatedAt,
   }
 }
