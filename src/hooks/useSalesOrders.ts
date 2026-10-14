@@ -9,7 +9,7 @@ import { fetchJSON } from '../lib/fetchJSON'
 // 【修正 Bug 3】移除未使用的 patchSequentially 匯入
 // （批次寫入庫存的邏輯已搬到 stockOperations.ts / salesOperations.ts）
 
-import { completeSalesOrderCore } from '../lib/salesOperations'
+import { completeSalesOrder } from '../lib/orderActions'
 import { API_BASE } from '../lib/config'
 // 【修正 Bug 3】移除未使用的 applyStockChangeWithLock 匯入
 // （這支函式現在只在 salesOperations.ts / usePurchaseOrders.ts 內部被呼叫）
@@ -119,7 +119,7 @@ export function useUpdateSalesStatus() {
 export function useCompleteSalesOrder() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (order: SalesOrder) => completeSalesOrderCore(order),
+    mutationFn: (order: SalesOrder) => completeSalesOrder(order), // 優先由後端交易處理，見 lib/orderActions.ts
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salesOrders'] })
       queryClient.invalidateQueries({ queryKey: ['ingredients'] })

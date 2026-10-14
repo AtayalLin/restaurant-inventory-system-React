@@ -74,7 +74,7 @@ function SalesPage() {
 
   function handleComplete(order: SalesOrder) {
     if (!window.confirm('確認出餐完成？系統將依配方自動扣減食材庫存。')) return
-    // 庫存不足時 completeSalesOrderCore 會拋出錯誤，訊息會列出不足的食材
+    // 庫存不足時會拋出錯誤，訊息會列出不足的食材（後端或前端版本皆同）
     completeOrder(order, notify('出餐完成，食材庫存已扣減', '出餐失敗，請稍後再試'))
   }
 

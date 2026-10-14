@@ -8,7 +8,10 @@
 import { http, HttpResponse, delay } from 'msw'
 import { db, persist, isCollection } from './db'
 import { answerQuestion, restockSuggestion, productCopy } from './ai'
+import { ActionError, completeSalesOrder, receivePurchaseOrder } from './actions'
 import type { LowStockPayload } from '../hooks/useRestockSuggestion'
+import type { PurchaseOrder, SalesOrder } from '../types'
+import { DEMO_PASSWORD, DEMO_USERS } from '../session/demoUsers'
 
 type Row = { id: string } & Record<string, unknown>
 
@@ -30,7 +33,45 @@ function table(name: string): Row[] | null {
 
 const notFound = () => HttpResponse.json({ error: 'Not Found' }, { status: 404 })
 
+/** 把業務動作的錯誤轉成和 Spring Boot 一樣的 Problem Details 回應 */
+function runAction(fn: () => SalesOrder | PurchaseOrder) {
+  try {
+    return HttpResponse.json(fn())
+  } catch (err) {
+    if (!(err instanceof ActionError)) throw err
+    return HttpResponse.json(
+      { status: err.status, title: err.title, detail: err.message },
+      { status: err.status, headers: { 'Content-Type': 'application/problem+json' } },
+    )
+  }
+}
+
 export const handlers = [
+  // ── 登入（對應後端 AuthController）：Demo 沒有真正的 JWT，回傳假 token ──
+  http.post('*/api/auth/login', async ({ request }) => {
+    await delay(300)
+    const { username, password } = (await request.json()) as { username?: string; password?: string }
+    const user = DEMO_USERS.find(u => u.username === username)
+    if (!user || password !== DEMO_PASSWORD) {
+      return HttpResponse.json(
+        { status: 401, title: 'BAD_CREDENTIALS', detail: '帳號或密碼錯誤' },
+        { status: 401, headers: { 'Content-Type': 'application/problem+json' } },
+      )
+    }
+    const { id, name, role, storeId } = user
+    return HttpResponse.json({ token: `demo-token-${id}`, user: { id, name, role, storeId } })
+  }),
+
+  // ── 業務動作（對應後端 OperationsController）─────────────
+  http.post('*/api/salesOrders/:id/complete', async ({ params }) => {
+    await latency()
+    return runAction(() => completeSalesOrder(String(params.id)))
+  }),
+  http.post('*/api/purchaseOrders/:id/receive', async ({ params }) => {
+    await latency()
+    return runAction(() => receivePurchaseOrder(String(params.id)))
+  }),
+
   // ── 系統設定：json-server 的單一物件資源 ─────────────────
   http.get('*/api/settings', async () => {
     await latency()

@@ -11,6 +11,8 @@ import SettingsPage from './pages/SettingsPage'
 import ConcurrencyTestPage from './pages/testing/ConcurrencyTestPage'
 import NotFoundPage from './pages/NotFoundPage'
 import RequirePermission from './components/RequirePermission'
+import RequireAuth from './components/RequireAuth'
+import LoginPage from './pages/LoginPage'
 // 【修正 Bug 4】補上匯入，否則畫面已經寫好但路由沒接，使用者永遠進不去
 
 function App() {
@@ -18,7 +20,9 @@ function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/login" element={<LoginPage />} />
+        {/* 以下頁面都需要登入 */}
+        <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products"  element={<ProductsPage />} />

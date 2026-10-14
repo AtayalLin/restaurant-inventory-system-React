@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PurchaseOrder } from '../types'
 import { fetchJSON } from '../lib/fetchJSON'
-import { applyStockChangeWithLock } from '../lib/stockOperations'
+import { receivePurchaseOrder } from '../lib/orderActions'
 import { API_BASE } from '../lib/config'
 
 const BASE = API_BASE
@@ -45,23 +45,7 @@ export function useReceivePurchaseOrder() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (order: PurchaseOrder) => {
-      for (const item of order.items) {
-        // 【修正 Bug 8】補上必填欄位 testBatchId：採購單不涉及併發測試，固定傳 null
-        await applyStockChangeWithLock(item.ingredientId, item.quantity, {
-          changeType: 'PURCHASE_RECEIVE',
-          referenceType: 'PURCHASE_ORDER',
-          referenceId: order.id,
-          testBatchId: null, // 【新增】
-        })
-      }
-
-      return fetchJSON<PurchaseOrder>(`${BASE}/purchaseOrders/${order.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'RECEIVED', receivedDate: new Date().toISOString() }),
-      })
-    },
+    mutationFn: (order: PurchaseOrder) => receivePurchaseOrder(order), // 優先由後端交易處理，見 lib/orderActions.ts
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] })
       queryClient.invalidateQueries({ queryKey: ['ingredients'] })

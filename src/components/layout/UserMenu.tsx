@@ -1,17 +1,17 @@
-import { MapPin, UserRound } from 'lucide-react'
-import { useSession } from '../../session/SessionProvider'
-import { DEMO_USERS } from '../../session/demoUsers'
+import { LogOut, MapPin, UserRound } from 'lucide-react'
+import { useCurrentUser, useSession } from '../../session/SessionProvider'
 import { useStores } from '../../hooks/useStores'
 import { ALL_STORES, ROLE_LABEL } from '../../lib/permissions'
 
 const selectClass = 'h-9 rounded-lg border border-line bg-white pl-8 pr-2 text-sm text-ink focus:outline-none focus:ring-4 focus:ring-brand-100'
 
 /**
- * 標題列右側：門市切換＋示範身分切換
+ * 標題列右側：門市切換＋目前使用者與登出
  * 總部可以切換門市（含「全部門市」）；店長、員工只顯示自己的門市名稱
  */
 function UserMenu() {
-  const { user, storeId, setStoreId, switchUser, can } = useSession()
+  const { storeId, setStoreId, logout, can } = useSession()
+  const user = useCurrentUser()
   const { data: stores = [] } = useStores()
   const storeName = (id: string | null) => stores.find(s => s.id === id)?.name ?? ''
 
@@ -31,17 +31,22 @@ function UserMenu() {
         )}
       </label>
 
-      {/* 示範身分：之後串接後端登入後改為使用者選單 */}
-      <label className="relative">
-        <span className="sr-only">示範身分</span>
-        <UserRound size={15} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden="true" />
-        <select value={user.id} onChange={e => switchUser(e.target.value)} className={`${selectClass} max-w-[7.5rem] sm:max-w-none`}
-          title="切換示範身分，查看不同角色的權限差異">
-          {DEMO_USERS.map(u => (
-            <option key={u.id} value={u.id}>{u.name}（{ROLE_LABEL[u.role]}{u.storeId ? `・${storeName(u.storeId)}` : ''}）</option>
-          ))}
-        </select>
-      </label>
+      {/* 目前使用者＋登出；要換身分就登出後選另一個示範帳號 */}
+      <span className="hidden items-center gap-1.5 text-sm text-ink-2 sm:inline-flex">
+        <UserRound size={15} className="text-ink-3" aria-hidden="true" />
+        {user.name}
+        <span className="text-xs text-ink-3">（{ROLE_LABEL[user.role]}{user.storeId ? `・${storeName(user.storeId)}` : ''}）</span>
+      </span>
+      <button
+        type="button"
+        onClick={logout}
+        aria-label="登出"
+        title="登出"
+        className="inline-flex h-9 items-center gap-1 rounded-lg border border-line bg-white px-2.5 text-sm text-ink-2 hover:bg-slate-50 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+      >
+        <LogOut size={15} aria-hidden="true" />
+        <span className="hidden sm:inline">登出</span>
+      </button>
     </div>
   )
 }

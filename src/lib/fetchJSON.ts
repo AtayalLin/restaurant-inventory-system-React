@@ -23,6 +23,11 @@
  * 疊加重試曾經讓錯誤畫面卡住超過 10 秒才顯示，詳見開發紀錄。）
  */
 
+import { apiFetch } from './auth'
+
+/** 4xx 代表請求本身有問題（未登入、沒權限、資料不存在），重試也不會成功 */
+class ClientError extends Error {}
+
 export async function fetchJSON<T>(
   url: string,
   options?: RequestInit,
@@ -30,7 +35,7 @@ export async function fetchJSON<T>(
 ): Promise<T> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         ...options,
         headers: {
           'Cache-Control': 'no-cache',
@@ -38,10 +43,13 @@ export async function fetchJSON<T>(
           ...(options?.headers ?? {}),
         },
       })
+      if (res.status === 401) throw new ClientError('登入已過期，請重新登入')
+      if (res.status === 403) throw new ClientError('沒有權限執行這個操作')
+      if (res.status >= 400 && res.status < 500) throw new ClientError(`API 錯誤：${res.status}`)
       if (!res.ok) throw new Error(`API 錯誤：${res.status}`)
       return res.json()
     } catch (err) {
-      if (attempt === retries) throw err
+      if (err instanceof ClientError || attempt === retries) throw err
       // 指數退避：第一次重試等 300ms，第二次等 600ms
       // 為什麼要等待：給 json-server 一點喘息時間恢復，立即重試很可能再次失敗
       await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)))

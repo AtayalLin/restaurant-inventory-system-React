@@ -8,6 +8,7 @@ import type { Product, ProductCategory } from '../types'
 
 import { fetchJSON } from '../lib/fetchJSON' // 新增：改用共用的 fetchJSON，取代原本檔案內重複定義的版本
 import { API_BASE } from '../lib/config'
+import { apiFetch } from '../lib/auth' // 帶登入 token 的 fetch
 
 
 // ==========================================
@@ -95,7 +96,7 @@ export function useCreateProduct() {
 
   return useMutation({
     mutationFn: async (data: Omit<Product, 'id' | 'createdAt'>) => {
-      const res = await fetch(`${BASE}/products`, {
+      const res = await apiFetch(`${BASE}/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +120,7 @@ export function useUpdateProduct() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Product> }) => {
-      const res = await fetch(`${BASE}/products/${id}`, {
+      const res = await apiFetch(`${BASE}/products/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -139,7 +140,7 @@ export function useDeleteProduct() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${BASE}/products/${id}`, {
+      const res = await apiFetch(`${BASE}/products/${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error('刪除商品失敗')

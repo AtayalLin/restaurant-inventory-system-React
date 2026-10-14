@@ -16,6 +16,7 @@ import type { Ingredient, Supplier } from '../types'
 
 import { fetchJSON } from '../lib/fetchJSON' // 新增
 import { API_BASE } from '../lib/config'
+import { apiFetch } from '../lib/auth' // 帶登入 token 的 fetch
 
 
 const BASE = API_BASE
@@ -100,7 +101,7 @@ export function useCreateIngredient() {
       // Omit<Ingredient, 'id' | 'createdAt' | 'version'>：
       //   新增時不需要傳 id（由這裡產生）、createdAt 與 version（由這裡補上）
       //   TypeScript 會確保其他所有必填欄位都有傳入
-      const res = await fetch(`${BASE}/ingredients`, {
+      const res = await apiFetch(`${BASE}/ingredients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -135,7 +136,7 @@ export function useUpdateIngredient() {
       // Partial<Ingredient>：所有欄位都變成選填
       // 為什麼用 Partial：PATCH 語意是「部分更新」，只傳有變動的欄位
       // 比 PUT（全量更新）更安全，不會意外清除沒有修改的欄位
-      const res = await fetch(`${BASE}/ingredients/${id}`, {
+      const res = await apiFetch(`${BASE}/ingredients/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -155,7 +156,7 @@ export function useDeleteIngredient() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${BASE}/ingredients/${id}`, {
+      const res = await apiFetch(`${BASE}/ingredients/${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error('刪除食材失敗')
